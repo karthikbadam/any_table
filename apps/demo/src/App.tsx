@@ -61,7 +61,7 @@ function StatsBar({ table }: { table: UseTableReturn }) {
         <span style={label}>rows</span> {data.totalRows.toLocaleString()}
       </span>
       <span style={pill}>
-        <span style={label}>height</span> {layout.rowHeight}px
+        <span style={label}>Row height</span> {layout.rowHeight}px
       </span>
       <span style={pill}>
         <span style={label}>scroll</span> {Math.round(scroll?.scrollTop ?? 0)}px
@@ -250,7 +250,7 @@ export default function App() {
     <MosaicProvider coordinator={coordinatorRef.current}>
       <div style={{ padding: "1rem" }}>
         <h1 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem" }}>
-          Anytable • open_rubrics data
+          Anytable • OpenRubric-science dataset
         </h1>
         <RubricsTable />
       </div>

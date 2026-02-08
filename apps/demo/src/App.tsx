@@ -127,8 +127,8 @@ function RubricsTable() {
           position: "relative",
           border: "1px solid var(--border)",
           borderRadius: 6,
-          overflow: "hidden",
           background: "var(--surface)",
+          margin: "1rem 0",
         }}
       >
         <Table.Root {...table.rootProps}>
@@ -168,7 +168,9 @@ function RubricsTable() {
                   style={{
                     borderBottom: "1px solid var(--border)",
                     background:
-                      row.index % 2 === 0 ? "var(--surface)" : "var(--surface-2)",
+                      row.index % 2 === 0
+                        ? "var(--surface)"
+                        : "var(--surface-2)",
                   }}
                 >
                   {({ cells }) =>
@@ -194,6 +196,7 @@ function RubricsTable() {
             }
           </Table.Viewport>
           <Table.VerticalScrollbar />
+          <Table.HorizontalScrollbar />
         </Table.Root>
       </div>
     </>
@@ -206,7 +209,11 @@ function renderCell(value: unknown, column: string): React.ReactNode {
 
   if (column === "winner") {
     const color =
-      str === "A" ? "var(--accent)" : str === "B" ? "var(--bad-fg)" : "var(--muted-fg)";
+      str === "A"
+        ? "var(--accent)"
+        : str === "B"
+          ? "var(--bad-fg)"
+          : "var(--muted-fg)";
     return <span style={{ fontWeight: 600, color }}>{str}</span>;
   }
 

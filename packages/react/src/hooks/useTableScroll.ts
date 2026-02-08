@@ -9,12 +9,6 @@ import type { TableData } from '../context/DataContext';
 import type { ColumnLayout } from '../context/LayoutContext';
 import type { TableScroll } from '../context/ScrollContext';
 
-const MAX_PENDING_DELTA = 10000;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
 export interface UseTableScrollOptions {
   data: TableData;
   layout: ColumnLayout;
@@ -36,8 +30,6 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
   const fetchWindowRef = useRef<FetchWindow | null>(null);
   const viewportElRef = useRef<HTMLElement | null>(null);
   const lastTouchRef = useRef<{ x: number; y: number } | null>(null);
-  const pendingDeltaXRef = useRef(0);
-  const pendingDeltaYRef = useRef(0);
 
   const [visibleRowRange, setVisibleRowRange] = useState({ start: 0, end: 0 });
   const [scrollTop, setScrollTop] = useState(0);
@@ -53,9 +45,16 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     return containerRef.current?.clientWidth ?? 0;
   }, [containerRef]);
 
+  const clampScrollLeft = useCallback((value: number) => {
+    const max = Math.max(0, totalWidth - getViewportWidth());
+    return Math.max(0, Math.min(max, value));
+  }, [totalWidth, getViewportWidth]);
+
   // Core scroll update — runs in rAF.
   // Dependencies are all primitives or stable callbacks — no object refs.
   const updateScroll = useCallback(() => {
+    rafIdRef.current = null;
+
     const viewportHeight = getViewportHeight();
     if (viewportHeight === 0 || rowHeight === 0) return;
 
@@ -84,60 +83,26 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     }
   }, [rowHeight, totalRows, overscan, setWindow, getViewportHeight, getViewportWidth]);
 
-  const flushQueuedScroll = useCallback(() => {
-    rafIdRef.current = null;
-
-    const queuedDeltaX = pendingDeltaXRef.current;
-    const queuedDeltaY = pendingDeltaYRef.current;
-    pendingDeltaXRef.current = 0;
-    pendingDeltaYRef.current = 0;
-
-    if (queuedDeltaX !== 0 || queuedDeltaY !== 0) {
-      const maxScrollTop = Math.max(0, totalHeight - getViewportHeight());
-      const maxScrollLeft = Math.max(0, totalWidth - getViewportWidth());
-      scrollTopRef.current = clamp(scrollTopRef.current + queuedDeltaY, 0, maxScrollTop);
-      scrollLeftRef.current = clamp(scrollLeftRef.current + queuedDeltaX, 0, maxScrollLeft);
-    }
-
-    updateScroll();
-
-    if (
-      (pendingDeltaXRef.current !== 0 || pendingDeltaYRef.current !== 0) &&
-      rafIdRef.current == null
-    ) {
-      rafIdRef.current = requestAnimationFrame(flushQueuedScroll);
-    }
-  }, [getViewportHeight, getViewportWidth, totalHeight, totalWidth, updateScroll]);
-
-  const scheduleFlush = useCallback(() => {
-    if (rafIdRef.current == null) {
-      rafIdRef.current = requestAnimationFrame(flushQueuedScroll);
-    }
-  }, [flushQueuedScroll]);
-
-  const enqueueDelta = useCallback(
-    (deltaX: number, deltaY: number) => {
-      if (deltaX === 0 && deltaY === 0) return;
-      pendingDeltaXRef.current = clamp(
-        pendingDeltaXRef.current + deltaX,
-        -MAX_PENDING_DELTA,
-        MAX_PENDING_DELTA,
-      );
-      pendingDeltaYRef.current = clamp(
-        pendingDeltaYRef.current + deltaY,
-        -MAX_PENDING_DELTA,
-        MAX_PENDING_DELTA,
-      );
-      scheduleFlush();
-    },
-    [scheduleFlush],
-  );
-
   // Ref that always points to the latest wheel handler closure.
   const handleWheelRef = useRef<(e: WheelEvent) => void>(() => {});
   handleWheelRef.current = (e: WheelEvent) => {
     e.preventDefault();
-    enqueueDelta(e.deltaX, e.deltaY);
+
+    const maxScrollTop = Math.max(0, totalHeight - getViewportHeight());
+    const maxScrollLeft = Math.max(0, totalWidth - getViewportWidth());
+
+    scrollTopRef.current = Math.max(
+      0,
+      Math.min(maxScrollTop, scrollTopRef.current + e.deltaY),
+    );
+    scrollLeftRef.current = Math.max(
+      0,
+      Math.min(maxScrollLeft, scrollLeftRef.current + e.deltaX),
+    );
+
+    if (rafIdRef.current == null) {
+      rafIdRef.current = requestAnimationFrame(updateScroll);
+    }
   };
 
   // Stable per-instance handler created once — delegates to handleWheelRef
@@ -171,19 +136,23 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     const deltaY = touch.clientY - last.y;
     lastTouchRef.current = { x: touch.clientX, y: touch.clientY };
 
-    const queuedX = -deltaX;
-    const queuedY = -deltaY;
     const maxScrollTop = Math.max(0, totalHeight - getViewportHeight());
     const maxScrollLeft = Math.max(0, totalWidth - getViewportWidth());
-    const baseTop = clamp(scrollTopRef.current + pendingDeltaYRef.current, 0, maxScrollTop);
-    const baseLeft = clamp(scrollLeftRef.current + pendingDeltaXRef.current, 0, maxScrollLeft);
-    const nextTop = clamp(baseTop + queuedY, 0, maxScrollTop);
-    const nextLeft = clamp(baseLeft + queuedX, 0, maxScrollLeft);
-    const didScroll = nextTop !== baseTop || nextLeft !== baseLeft;
+    const prevTop = scrollTopRef.current;
+    const prevLeft = scrollLeftRef.current;
+
+    scrollTopRef.current = Math.max(0, Math.min(maxScrollTop, prevTop - deltaY));
+    scrollLeftRef.current = Math.max(0, Math.min(maxScrollLeft, prevLeft - deltaX));
+
+    const didScroll =
+      scrollTopRef.current !== prevTop || scrollLeftRef.current !== prevLeft;
     if (!didScroll) return;
 
     e.preventDefault();
-    enqueueDelta(queuedX, queuedY);
+
+    if (rafIdRef.current == null) {
+      rafIdRef.current = requestAnimationFrame(updateScroll);
+    }
   };
 
   const handleTouchEndRef = useRef<(e: TouchEvent) => void>(() => {});
@@ -244,9 +213,9 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
   // Trigger initial fetch when data becomes available
   useEffect(() => {
     if (rowHeight > 0 && totalRows > 0) {
-      scheduleFlush();
+      updateScroll();
     }
-  }, [rowHeight, totalRows, scheduleFlush]);
+  }, [rowHeight, totalRows, updateScroll]);
 
   // Cleanup rAF on unmount
   useEffect(() => {
@@ -254,28 +223,32 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
       if (rafIdRef.current != null) {
         cancelAnimationFrame(rafIdRef.current);
       }
-      rafIdRef.current = null;
-      pendingDeltaXRef.current = 0;
-      pendingDeltaYRef.current = 0;
     };
   }, []);
 
   const scrollToRow = useCallback(
     (index: number) => {
       scrollTopRef.current = Math.max(0, index * rowHeight);
-      pendingDeltaXRef.current = 0;
-      pendingDeltaYRef.current = 0;
-      scheduleFlush();
+      if (rafIdRef.current == null) {
+        rafIdRef.current = requestAnimationFrame(updateScroll);
+      }
     },
-    [rowHeight, scheduleFlush],
+    [rowHeight, updateScroll],
   );
 
   const scrollToTop = useCallback(() => {
     scrollTopRef.current = 0;
-    pendingDeltaXRef.current = 0;
-    pendingDeltaYRef.current = 0;
-    scheduleFlush();
-  }, [scheduleFlush]);
+    if (rafIdRef.current == null) {
+      rafIdRef.current = requestAnimationFrame(updateScroll);
+    }
+  }, [updateScroll]);
+
+  const scrollToX = useCallback((x: number) => {
+    scrollLeftRef.current = clampScrollLeft(x);
+    if (rafIdRef.current == null) {
+      rafIdRef.current = requestAnimationFrame(updateScroll);
+    }
+  }, [clampScrollLeft, updateScroll]);
 
   const scrollContainerStyle: CSSProperties = {
     position: 'relative',
@@ -290,6 +263,7 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     viewportRef,
     scrollContainerStyle,
     scrollToRow,
+    scrollToX,
     scrollToTop,
   };
 }

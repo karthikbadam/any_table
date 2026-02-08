@@ -6,6 +6,7 @@ import { TableRow } from './TableRow';
 import { TableCell } from './TableCell';
 import { SortTrigger } from './SortTrigger';
 import { VerticalScrollbar } from './VerticalScrollbar';
+import { HorizontalScrollbar } from './HorizontalScrollbar';
 
 export const Table = {
   Root: TableRoot,
@@ -16,4 +17,5 @@ export const Table = {
   Cell: TableCell,
   SortTrigger: SortTrigger,
   VerticalScrollbar: VerticalScrollbar,
+  HorizontalScrollbar: HorizontalScrollbar,
 } as const;

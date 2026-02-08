@@ -9,6 +9,7 @@ export interface TableScroll {
   viewportRef: (el: HTMLElement | null) => void;
   scrollContainerStyle: CSSProperties;
   scrollToRow(index: number): void;
+  scrollToX(x: number): void;
   scrollToTop(): void;
 }
 

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { MosaicClient, Selection, Coordinator } from '@uwdata/mosaic-core';
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import type { MosaicClient, Selection, Coordinator } from "@uwdata/mosaic-core";
 import {
   SparseDataModel,
   fetchSchema,
@@ -10,9 +10,9 @@ import {
   type SortField,
   type RowRecord,
   type RowsClient,
-} from '@any_table/core';
-import { useMosaicCoordinator } from '../context/MosaicContext';
-import type { TableData } from '../context/DataContext';
+} from "@any_table/core";
+import { useMosaicCoordinator } from "../context/MosaicContext";
+import type { TableData } from "../context/DataContext";
 
 export interface UseTableDataOptions {
   table?: string;
@@ -27,7 +27,7 @@ export function useTableData(options: UseTableDataOptions): TableData {
   const coordinator = useMosaicCoordinator();
 
   // Stabilize columns array — only recompute when the actual column names change
-  const columnsKey = options.columns.join(',');
+  const columnsKey = options.columns.join(",");
   const columns = useMemo(() => options.columns, [columnsKey]);
 
   const [version, setVersion] = useState(0);
@@ -48,8 +48,8 @@ export function useTableData(options: UseTableDataOptions): TableData {
 
     const inferredSchema: ColumnSchema[] = columns.map((name) => ({
       name,
-      sqlType: 'VARCHAR',
-      typeCategory: 'text' as const,
+      sqlType: "VARCHAR",
+      typeCategory: "text" as const,
     }));
     setSchema(inferredSchema);
 
@@ -72,8 +72,8 @@ export function useTableData(options: UseTableDataOptions): TableData {
     async function init() {
       try {
         const [mosaicCore, mosaicSql] = await Promise.all([
-          import('@uwdata/mosaic-core'),
-          import('@uwdata/mosaic-sql'),
+          import("@uwdata/mosaic-core"),
+          import("@uwdata/mosaic-sql"),
         ]);
 
         if (cancelled) return;
@@ -89,9 +89,10 @@ export function useTableData(options: UseTableDataOptions): TableData {
 
         if (cancelled) return;
 
-        const filteredSchema = columns.length > 0
-          ? schemaResult.filter((s) => columns.includes(s.name))
-          : schemaResult;
+        const filteredSchema =
+          columns.length > 0
+            ? schemaResult.filter((s) => columns.includes(s.name))
+            : schemaResult;
 
         setSchema(filteredSchema);
 
@@ -119,8 +120,12 @@ export function useTableData(options: UseTableDataOptions): TableData {
           {
             tableName: table!,
             columns: filteredSchema,
-            onResult: (rows: RowRecord[], offset: number) => {
-              model.mergeRows(offset, rows);
+            onResult: (rows: RowRecord[]) => {
+              for (const row of rows) {
+                const oid = Number(row.__oid);
+                if (!Number.isFinite(oid) || oid <= 0) continue;
+                model.mergeRows(oid - 1, [row]);
+              }
               setIsLoading(false);
               setVersion((v) => v + 1);
             },
@@ -137,7 +142,7 @@ export function useTableData(options: UseTableDataOptions): TableData {
         }
       } catch (err) {
         if (!cancelled) {
-          console.error('[any_table] Failed to initialize data:', err);
+          console.error("[any_table] Failed to initialize data:", err);
           setIsLoading(false);
         }
       }
@@ -176,8 +181,10 @@ export function useTableData(options: UseTableDataOptions): TableData {
             for (const field of fields) {
               const aVal = a[field.column];
               const bVal = b[field.column];
-              if (aVal != null && bVal != null && aVal < bVal) return field.desc ? 1 : -1;
-              if (aVal != null && bVal != null && aVal > bVal) return field.desc ? -1 : 1;
+              if (aVal != null && bVal != null && aVal < bVal)
+                return field.desc ? 1 : -1;
+              if (aVal != null && bVal != null && aVal > bVal)
+                return field.desc ? -1 : 1;
             }
             return 0;
           });
@@ -213,14 +220,17 @@ export function useTableData(options: UseTableDataOptions): TableData {
   const hasRow = useCallback((index: number) => model.hasRow(index), [model]);
 
   // Stabilize the returned data object — only changes when data actually changes
-  return useMemo<TableData>(() => ({
-    getRow,
-    hasRow,
-    totalRows: model.totalRows,
-    schema,
-    isLoading,
-    setWindow,
-    sort,
-    setSort,
-  }), [getRow, hasRow, version, schema, isLoading, setWindow, sort, setSort]);
+  return useMemo<TableData>(
+    () => ({
+      getRow,
+      hasRow,
+      totalRows: model.totalRows,
+      schema,
+      isLoading,
+      setWindow,
+      sort,
+      setSort,
+    }),
+    [getRow, hasRow, version, schema, isLoading, setWindow, sort, setSort],
+  );
 }

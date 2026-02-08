@@ -5,7 +5,8 @@
     "rootDir": "./src",
     "composite": false,
     "declaration": false,
-    "declarationMap": false
+    "declarationMap": false,
+    "types": ["vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

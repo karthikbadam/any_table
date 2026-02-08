@@ -1,5 +1,8 @@
-import * as duckdb from '@duckdb/duckdb-wasm';
-import { Coordinator, coordinator as setGlobalCoordinator } from '@uwdata/mosaic-core';
+import * as duckdb from "@duckdb/duckdb-wasm";
+import {
+  Coordinator,
+  coordinator as setGlobalCoordinator,
+} from "@uwdata/mosaic-core";
 
 export async function setupMosaic(): Promise<Coordinator> {
   // 1. Initialize DuckDB-WASM
@@ -12,9 +15,11 @@ export async function setupMosaic(): Promise<Coordinator> {
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
   // 2. Load the parquet file (import.meta.env.BASE_URL respects Vite's base config)
-  const response = await fetch(`open_rubrics.parquet`);
+  const response = await fetch(
+    `${import.meta.env.BASE_URL}open_rubrics.parquet`,
+  );
   const buffer = await response.arrayBuffer();
-  await db.registerFileBuffer('open_rubrics.parquet', new Uint8Array(buffer));
+  await db.registerFileBuffer("open_rubrics.parquet", new Uint8Array(buffer));
 
   const connection = await db.connect();
   await connection.query(`
@@ -22,7 +27,9 @@ export async function setupMosaic(): Promise<Coordinator> {
   `);
 
   // Verify
-  const countResult = await connection.query('SELECT count(*) as cnt FROM open_rubrics');
+  const countResult = await connection.query(
+    "SELECT count(*) as cnt FROM open_rubrics",
+  );
   const count = countResult.toArray()[0].cnt;
   console.log(`[anytable] Loaded ${count} rows from open_rubrics.parquet`);
 
@@ -30,7 +37,8 @@ export async function setupMosaic(): Promise<Coordinator> {
   const connector = {
     connected: true as const,
     query: async (query: { sql?: string; type?: string } | string) => {
-      const sql = typeof query === 'string' ? query : query.sql ?? String(query);
+      const sql =
+        typeof query === "string" ? query : (query.sql ?? String(query));
       const result = await connection.query(sql);
       return result;
     },

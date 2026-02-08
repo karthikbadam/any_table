@@ -108,18 +108,23 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     };
   }
 
-  // Ref callback to capture the viewport element and attach the wheel listener
-  // imperatively with { passive: false } so preventDefault works.
+  // Ref callback for the viewport element (used by TableViewport for DOM identity).
   const viewportRef = useCallback((el: HTMLElement | null) => {
-    const handler = stableHandlerRef.current!;
-    if (viewportElRef.current) {
-      viewportElRef.current.removeEventListener('wheel', handler);
-    }
     viewportElRef.current = el;
-    if (el) {
-      el.addEventListener('wheel', handler, { passive: false });
-    }
   }, []);
+
+  // Attach wheel listener to the container element (containerRef) rather than
+  // the viewport element — the container always has proper dimensions and
+  // reliably receives wheel events.
+  useEffect(() => {
+    const el = containerRef.current;
+    const handler = stableHandlerRef.current!;
+    if (!el) return;
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handler);
+    };
+  }, [containerRef]);
 
   // Trigger initial fetch when data becomes available
   useEffect(() => {
@@ -128,15 +133,11 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     }
   }, [rowHeight, totalRows, updateScroll]);
 
-  // Cleanup rAF and wheel listener on unmount
+  // Cleanup rAF on unmount
   useEffect(() => {
     return () => {
       if (rafIdRef.current != null) {
         cancelAnimationFrame(rafIdRef.current);
-      }
-      const handler = stableHandlerRef.current;
-      if (viewportElRef.current && handler) {
-        viewportElRef.current.removeEventListener('wheel', handler);
       }
     };
   }, []);

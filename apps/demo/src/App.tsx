@@ -22,27 +22,22 @@ function RubricsTable() {
     containerRef,
   });
 
-  const { data, layout, scroll } = table;
-
   return (
-    <>
-    <pre style={{ fontSize: "0.7rem", padding: "4px 0px", margin: "0 0 4px" }}>
-      {`rows=${data.totalRows} rowHeight=${layout.rowHeight} width=${Math.round(layout.totalWidth)} scrollTop=${scroll?.scrollTop ?? "null"} visible=${scroll ? `${scroll.visibleRowRange.start}-${scroll.visibleRowRange.end}` : "null"} load=${data.isLoading}`}
-    </pre>
     <div
       ref={containerRef}
       style={{
         width: "100%",
-        height: "calc(100vh - 120px)",
+        height: "calc(100vh - 80px)",
         position: "relative",
-        borderBottom: "1px solid #eee",
+        border: "1px solid #ddd",
+        borderRadius: 6,
+        overflow: "hidden",
       }}
     >
       <Table.Root {...table.rootProps}>
         <Table.Header
           style={{
-            background: "#f5f5f5",
-            borderBottom: "2px solid #ddd",
+            padding: '8px'
           }}
         >
           {({ columns: cols }) =>
@@ -51,13 +46,15 @@ function RubricsTable() {
                 key={col.key}
                 column={col.key}
                 style={{
-                  padding: "8px 12px",
                   fontWeight: 600,
-                  fontSize: "0.9rem",
+                  fontSize: "0.75rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: "#555",
                 }}
               >
                 <Table.SortTrigger column={col.key}>
-                  {col.key}
+                  {col.key.replace(/_/g, " ")}
                 </Table.SortTrigger>
               </Table.HeaderCell>
             ))
@@ -82,9 +79,10 @@ function RubricsTable() {
                       width={cell.width}
                       offset={cell.offset}
                       style={{
-                        padding: "6px 12px",
+                        padding: "8px 12px",
                         fontSize: "0.8rem",
-                        lineHeight: "1.4",
+                        lineHeight: "1.5",
+                        color: "#333",
                       }}
                     >
                       {renderCell(cell.value, cell.column)}
@@ -98,7 +96,6 @@ function RubricsTable() {
         <Table.VerticalScrollbar />
       </Table.Root>
     </div>
-    </>
   );
 }
 
@@ -112,9 +109,6 @@ function renderCell(value: unknown, column: string): React.ReactNode {
     return <span style={{ fontWeight: 600, color }}>{str}</span>;
   }
 
-  if (str.length > 200) {
-    return str.slice(0, 200) + "...";
-  }
   return str;
 }
 

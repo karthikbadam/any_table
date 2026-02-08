@@ -38,6 +38,7 @@ export function TableRow({ row, children, className, style }: TableRowProps) {
         width: layout.totalWidth,
         height: layout.rowHeight,
         display: 'flex',
+        overflow: 'hidden',
         transform: `translateY(${row.top}px)`,
         ...style,
       }}

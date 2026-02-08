@@ -26,12 +26,10 @@ export function TableCell({
         left: offset,
         width,
         height: '100%',
-        display: 'flex',
-        alignItems: 'center',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
         ...style,
       }}
     >

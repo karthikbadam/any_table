@@ -1,0 +1,34 @@
+{
+  "name": "@anytable/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "@uwdata/mosaic-core": ">=0.10.0",
+    "@uwdata/mosaic-sql": ">=0.10.0"
+  },
+  "peerDependenciesMeta": {
+    "@uwdata/mosaic-core": { "optional": true },
+    "@uwdata/mosaic-sql": { "optional": true }
+  },
+  "devDependencies": {
+    "@uwdata/mosaic-core": "^0.12.0",
+    "@uwdata/mosaic-sql": "^0.12.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}

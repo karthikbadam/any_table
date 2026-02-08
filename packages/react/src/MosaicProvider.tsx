@@ -1,9 +1,9 @@
 import React from 'react';
-import type { CoordinatorLike } from '@anytable/core';
+import type { Coordinator } from '@uwdata/mosaic-core';
 import { MosaicContext } from './context/MosaicContext';
 
 interface MosaicProviderProps {
-  coordinator?: CoordinatorLike | null;
+  coordinator?: Coordinator | null;
   children: React.ReactNode;
 }
 

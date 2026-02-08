@@ -1,10 +1,10 @@
-# anytable
+# Anytable
 
 A headless, virtualized React table for large datasets.
 
 ## Try the Demo
 
-**[Live demo](https://karthikbadam.github.io/anytable/)** — 11K rows from the Open Rubrics dataset, loaded into DuckDB-WASM and rendered with anytable. Click column headers to sort.
+**[Live demo](https://karthikbadam.github.io/anytable/)** — 11K rows from the Open Rubrics dataset, loaded into DuckDB-WASM and rendered with Anytable. Click column headers to sort.
 
 Or run it locally:
 

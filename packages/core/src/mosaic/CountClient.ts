@@ -1,41 +1,38 @@
-import type {
-  ClientConstructor,
-  QueryStatic,
-  QueryResult,
-  SelectionLike,
-  CountClientInstance,
-} from '../types/mosaic';
+import type { MosaicClient, Selection } from '@uwdata/mosaic-core';
+import type { SelectQuery, AggregateNode } from '@uwdata/mosaic-sql';
 
 export interface CountClientConfig {
   tableName: string;
   onResult: (count: number) => void;
 }
 
+/**
+ * Create a MosaicClient that queries the total row count of a table.
+ *
+ * MosaicClientClass is the MosaicClient constructor, passed at runtime from
+ * a dynamic import of @uwdata/mosaic-core. We override `query` and `queryResult`
+ * on the instance to implement the count logic.
+ */
 export function createCountClient(
-  MosaicClient: ClientConstructor,
-  Query: QueryStatic,
-  countFn: () => unknown,
+  MosaicClientClass: new (filterSelection?: Selection) => MosaicClient,
+  Query: { from(table: string): SelectQuery },
+  countFn: () => AggregateNode,
   config: CountClientConfig,
-  filterSelection?: SelectionLike,
-): CountClientInstance {
-  const tableName = config.tableName;
-  const onCountResult = config.onResult;
+  filterSelection?: Selection,
+): MosaicClient {
+  const client = new MosaicClientClass(filterSelection);
 
-  // MosaicClient is designed for query/queryResult to be overridden per-client.
-  // We cast once after construction, then assign the required overrides.
-  const client = new MosaicClient(filterSelection) as unknown as CountClientInstance;
-
-  client.query = (filter?: unknown[]) => {
-    return Query.from(tableName)
+  client.query = (filter?: any) => {
+    return Query.from(config.tableName)
       .select({ count: countFn() })
       .where(filter);
   };
 
-  client.queryResult = (data: QueryResult) => {
+  client.queryResult = (data: any) => {
     const arr = data.toArray();
     const row = arr[0] as Record<string, unknown> | undefined;
     const count = Number(row?.count ?? 0);
-    onCountResult(count);
+    config.onResult(count);
     return client;
   };
 

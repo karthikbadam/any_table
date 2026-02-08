@@ -1,8 +1,7 @@
 import * as duckdb from '@duckdb/duckdb-wasm';
 import { Coordinator, coordinator as setGlobalCoordinator } from '@uwdata/mosaic-core';
-import type { CoordinatorLike } from '@anytable/core';
 
-export async function setupMosaic(): Promise<CoordinatorLike> {
+export async function setupMosaic(): Promise<Coordinator> {
   // 1. Initialize DuckDB-WASM
   const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
   const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
@@ -13,7 +12,7 @@ export async function setupMosaic(): Promise<CoordinatorLike> {
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
   // 2. Load the parquet file (import.meta.env.BASE_URL respects Vite's base config)
-  const response = await fetch(`${import.meta.env.BASE_URL}open_rubrics.parquet`);
+  const response = await fetch(`open_rubrics.parquet`);
   const buffer = await response.arrayBuffer();
   await db.registerFileBuffer('open_rubrics.parquet', new Uint8Array(buffer));
 
@@ -38,10 +37,7 @@ export async function setupMosaic(): Promise<CoordinatorLike> {
   };
 
   // 4. Create Coordinator
-  const coord = new Coordinator(connector, {
-    cache: true,
-    consolidate: true,
-  });
+  const coord = new Coordinator(connector);
 
   setGlobalCoordinator(coord);
   return coord;

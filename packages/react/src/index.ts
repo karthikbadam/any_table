@@ -10,7 +10,11 @@ export type {
   TypeCategory,
   ResolvedColumn,
   RowHeightConfig,
+  RowRecord,
 } from '@anytable/core';
+
+// Re-export Mosaic types for consumer convenience (type-only, no runtime dep)
+export type { Coordinator, Selection } from '@uwdata/mosaic-core';
 
 // Provider
 export { MosaicProvider } from './MosaicProvider';

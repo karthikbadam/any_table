@@ -1,12 +1,14 @@
-import type { ColumnSchema, SortField, Sort } from '../types/interfaces';
+import type { MosaicClient, Selection } from '@uwdata/mosaic-core';
 import type {
-  ClientConstructor,
-  QueryResult,
-  SelectionLike,
-  MosaicSqlApi,
-  RowsClientInstance,
-  RowRecord,
-} from '../types/mosaic';
+  SelectQuery,
+  ColumnRefNode,
+  CastNode,
+  WindowNode,
+  OrderByNode,
+  ExprValue,
+} from '@uwdata/mosaic-sql';
+import type { ColumnSchema, SortField, Sort } from '../types/interfaces';
+import type { RowRecord } from '../types/mosaic';
 import { getCastDescriptor } from '../types/casting';
 import { parseValue } from '../types/parsing';
 
@@ -16,17 +18,42 @@ export interface RowsClientConfig {
   onResult: (rows: RowRecord[], offset: number) => void;
 }
 
+/** SQL API surface from @uwdata/mosaic-sql needed by the rows client. */
+export interface RowsSqlApi {
+  Query: { from(table: string): SelectQuery };
+  column(name: string): ColumnRefNode;
+  cast(expr: ColumnRefNode, type: string): CastNode;
+  row_number(): WindowNode;
+  desc(expr: ExprValue): OrderByNode;
+}
+
+/**
+ * A MosaicClient extended with windowed fetching and sort control.
+ * React layer uses these methods to drive data loading on scroll/sort.
+ */
+export interface RowsClient extends MosaicClient {
+  fetchWindow(offset: number, limit: number): void;
+  sort: Sort | null;
+}
+
 function normalizeSortFields(sort: Sort | null): SortField[] | null {
   if (sort == null) return null;
   return Array.isArray(sort) ? sort : [sort];
 }
 
+/**
+ * Create a MosaicClient that queries windowed row data with type-aware casting.
+ *
+ * MosaicClientClass is passed at runtime from a dynamic import of @uwdata/mosaic-core.
+ * We override `query` and `queryResult` on the instance and add `fetchWindow`/`sort`
+ * for the React layer to drive data loading.
+ */
 export function createRowsClient(
-  MosaicClient: ClientConstructor,
-  sqlApi: MosaicSqlApi,
+  MosaicClientClass: new (filterSelection?: Selection) => MosaicClient,
+  sqlApi: RowsSqlApi,
   config: RowsClientConfig,
-  filterSelection?: SelectionLike,
-): RowsClientInstance {
+  filterSelection?: Selection,
+): RowsClient {
   const { Query, column, cast, row_number, desc } = sqlApi;
   const schemaMap = new Map<string, ColumnSchema>();
   for (const s of config.columns) {
@@ -37,9 +64,7 @@ export function createRowsClient(
   let currentOffset = 0;
   let currentLimit = 100;
 
-  // MosaicClient is designed for query/queryResult to be overridden per-client.
-  // We cast once after construction, then assign the required overrides.
-  const client = new MosaicClient(filterSelection) as unknown as RowsClientInstance;
+  const client = new MosaicClientClass(filterSelection);
 
   Object.defineProperty(client, 'sort', {
     get: () => currentSort,
@@ -48,8 +73,8 @@ export function createRowsClient(
     configurable: true,
   });
 
-  client.query = (filter?: unknown[]) => {
-    const select: Record<string, unknown> = {};
+  client.query = (filter?: any) => {
+    const select: Record<string, ColumnRefNode | CastNode | WindowNode> = {};
 
     for (const col of config.columns) {
       const descriptor = getCastDescriptor(col);
@@ -62,7 +87,7 @@ export function createRowsClient(
 
     // Stable positional ID via window function
     const sortFields = normalizeSortFields(currentSort);
-    let rn: unknown = row_number();
+    let rn: WindowNode = row_number();
     if (sortFields && sortFields.length > 0) {
       const orderExprs = sortFields.map((sf) =>
         sf.desc ? desc(column(sf.column)) : column(sf.column),
@@ -86,7 +111,7 @@ export function createRowsClient(
     return q.limit(currentLimit).offset(currentOffset);
   };
 
-  client.queryResult = (data: QueryResult) => {
+  client.queryResult = (data: any) => {
     const rawArr = data.toArray();
     const rows: RowRecord[] = [];
 
@@ -104,12 +129,12 @@ export function createRowsClient(
     return client;
   };
 
-  client.fetchWindow = (offset: number, limit: number) => {
+  // fetchWindow updates the offset/limit state. The React layer calls
+  // requestUpdate() separately, guarded by connection state.
+  (client as RowsClient).fetchWindow = (offset: number, limit: number) => {
     currentOffset = offset;
     currentLimit = limit;
-    // Does NOT call requestUpdate — the React layer owns that decision,
-    // guarded by connection state. This keeps the client a pure data object.
   };
 
-  return client;
+  return client as RowsClient;
 }

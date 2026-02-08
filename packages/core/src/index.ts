@@ -27,4 +27,4 @@ export { fetchSchema } from './mosaic/SchemaClient';
 export { createCountClient } from './mosaic/CountClient';
 export type { CountClientConfig } from './mosaic/CountClient';
 export { createRowsClient } from './mosaic/RowsClient';
-export type { RowsClientConfig } from './mosaic/RowsClient';
+export type { RowsClientConfig, RowsClient } from './mosaic/RowsClient';

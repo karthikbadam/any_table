@@ -2,7 +2,6 @@ import React from 'react';
 import { useDataContext } from '../context/DataContext';
 import { useLayoutContext } from '../context/LayoutContext';
 import { useScrollContext } from '../context/ScrollContext';
-import { getTotalHeight } from '@anytable/core';
 import type { RowRecord } from '@anytable/core';
 
 export interface VisibleRow {
@@ -23,11 +22,11 @@ export function TableViewport({ children, className, style }: TableViewportProps
   const layout = useLayoutContext();
   const scroll = useScrollContext();
 
-  const { rowHeight, totalWidth } = layout;
+  const { rowHeight } = layout;
   const { totalRows } = data;
-  const totalHeight = getTotalHeight(totalRows, rowHeight);
 
-  // Compute visible rows
+  // Compute visible rows — positioned relative to the viewport top
+  const scrollTop = scroll?.scrollTop ?? 0;
   const rows: VisibleRow[] = [];
 
   if (scroll && rowHeight > 0) {
@@ -40,7 +39,7 @@ export function TableViewport({ children, className, style }: TableViewportProps
         key: i,
         index: i,
         data: data.getRow(i),
-        top: i * rowHeight,
+        top: i * rowHeight - scrollTop,
       });
     }
   } else if (!scroll) {
@@ -55,6 +54,8 @@ export function TableViewport({ children, className, style }: TableViewportProps
     }
   }
 
+  // Rows are absolutely positioned at viewport-relative coordinates.
+  // overflow: hidden clips partially-visible rows at edges.
   return (
     <div
       ref={scroll?.viewportRef}
@@ -64,19 +65,10 @@ export function TableViewport({ children, className, style }: TableViewportProps
         flex: 1,
         overflow: 'hidden',
         position: 'relative',
-        ...scroll?.scrollContainerStyle,
         ...style,
       }}
     >
-      <div
-        style={{
-          height: totalHeight,
-          width: totalWidth,
-          position: 'relative',
-        }}
-      >
-        {children({ rows })}
-      </div>
+      {children({ rows })}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import type { MosaicClient, Selection, Coordinator } from '@uwdata/mosaic-core';
 import {
   SparseDataModel,
   fetchSchema,
@@ -8,11 +9,7 @@ import {
   type Sort,
   type SortField,
   type RowRecord,
-  type RowsClientInstance,
-  type CountClientInstance,
-  type SelectionLike,
-  type CoordinatorLike,
-  type QueryFieldInfoFn,
+  type RowsClient,
 } from '@anytable/core';
 import { useMosaicCoordinator } from '../context/MosaicContext';
 import type { TableData } from '../context/DataContext';
@@ -22,7 +19,7 @@ export interface UseTableDataOptions {
   rows?: RowRecord[];
   columns: string[];
   rowKey: string;
-  filter?: SelectionLike;
+  filter?: Selection;
 }
 
 export function useTableData(options: UseTableDataOptions): TableData {
@@ -39,8 +36,8 @@ export function useTableData(options: UseTableDataOptions): TableData {
   const [sort, setSortState] = useState<Sort | null>(null);
 
   const modelRef = useRef(new SparseDataModel());
-  const rowsClientRef = useRef<RowsClientInstance | null>(null);
-  const countClientRef = useRef<CountClientInstance | null>(null);
+  const rowsClientRef = useRef<RowsClient | null>(null);
+  const countClientRef = useRef<MosaicClient | null>(null);
   const connectedRef = useRef(false);
 
   // ── Array mode ──
@@ -85,9 +82,9 @@ export function useTableData(options: UseTableDataOptions): TableData {
         const { Query, column, cast, row_number, desc, count } = mosaicSql;
 
         const schemaResult = await fetchSchema(
-          coordinator as CoordinatorLike,
+          coordinator!,
           table!,
-          queryFieldInfo as unknown as QueryFieldInfoFn,
+          queryFieldInfo,
         );
 
         if (cancelled) return;
@@ -132,7 +129,6 @@ export function useTableData(options: UseTableDataOptions): TableData {
         );
         rowsClientRef.current = rowsClient;
 
-        // coordinator is guaranteed non-null — checked at the top of the effect
         await coordinator!.connect(countClient);
         await coordinator!.connect(rowsClient);
 

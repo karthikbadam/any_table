@@ -125,7 +125,12 @@ export function createRowsClient(
       rows.push(parsed);
     }
 
-    config.onResult(rows, currentOffset);
+    const firstOid = Number(rows[0]?.__oid);
+    const resultOffset =
+      Number.isFinite(firstOid) && firstOid > 0
+        ? firstOid - 1
+        : currentOffset;
+    config.onResult(rows, resultOffset);
     return client;
   };
 

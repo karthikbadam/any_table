@@ -11,7 +11,7 @@ export interface UseTableLayoutOptions {
 
 export function useTableLayout(options: UseTableLayoutOptions): ColumnLayout {
   const { columns, containerRef, rowHeightConfig } = options;
-  const { width, rootFontSize, tableFontSize } = useContainerWidth(containerRef);
+  const { width, height, rootFontSize, tableFontSize } = useContainerWidth(containerRef);
 
   return useMemo(() => {
     if (width === 0) {
@@ -19,6 +19,7 @@ export function useTableLayout(options: UseTableLayoutOptions): ColumnLayout {
       return {
         resolved: [],
         totalWidth: 0,
+        viewportHeight: 0,
         pinnedLeftWidth: 0,
         pinnedRightWidth: 0,
         scrollableWidth: 0,
@@ -45,8 +46,9 @@ export function useTableLayout(options: UseTableLayoutOptions): ColumnLayout {
 
     return {
       ...result,
+      viewportHeight: height,
       getWidth: (key: string) => widthMap.get(key) ?? 0,
       getOffset: (key: string) => offsetMap.get(key) ?? 0,
     };
-  }, [columns, width, rootFontSize, tableFontSize, rowHeightConfig]);
+  }, [columns, width, height, rootFontSize, tableFontSize, rowHeightConfig]);
 }

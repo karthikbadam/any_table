@@ -4,6 +4,7 @@ import type { ResolvedColumn } from '@any_table/core';
 export interface ColumnLayout {
   resolved: ResolvedColumn[];
   totalWidth: number;
+  viewportHeight: number;
   pinnedLeftWidth: number;
   pinnedRightWidth: number;
   scrollableWidth: number;

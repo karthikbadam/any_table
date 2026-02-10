@@ -120,12 +120,13 @@ export function useTableData(options: UseTableDataOptions): TableData {
           {
             tableName: table!,
             columns: filteredSchema,
-            onResult: (rows: RowRecord[]) => {
-              for (const row of rows) {
-                const oid = Number(row.__oid);
-                if (!Number.isFinite(oid) || oid <= 0) continue;
-                model.mergeRows(oid - 1, [row]);
-              }
+            onResult: (rows: RowRecord[], offset: number) => {
+              const firstOid = Number(rows[0]?.__oid);
+              const startIndex =
+                Number.isFinite(firstOid) && firstOid > 0
+                  ? firstOid - 1
+                  : Math.max(0, offset);
+              model.mergeRows(startIndex, rows);
               setIsLoading(false);
               setVersion((v) => v + 1);
             },
@@ -197,6 +198,7 @@ export function useTableData(options: UseTableDataOptions): TableData {
         const client = rowsClientRef.current;
         if (client && connectedRef.current) {
           client.sort = newSort;
+          setIsLoading(true);
           modelRef.current.clear();
           setVersion((v) => v + 1);
           client.requestUpdate();

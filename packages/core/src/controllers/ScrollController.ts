@@ -27,7 +27,11 @@ export function computeVisibleRange(state: ScrollState): RowRange {
   if (rowHeight <= 0 || totalRows <= 0) return { start: 0, end: 0 };
 
   const start = Math.max(0, Math.floor(scrollTop / rowHeight));
-  const end = Math.min(totalRows, Math.ceil((scrollTop + viewportHeight) / rowHeight));
+  const effectiveViewportHeight = Math.max(viewportHeight, rowHeight);
+  const end = Math.min(
+    totalRows,
+    Math.max(start + 1, Math.ceil((scrollTop + effectiveViewportHeight) / rowHeight)),
+  );
   return { start, end };
 }
 

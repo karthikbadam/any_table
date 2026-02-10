@@ -2,11 +2,11 @@
 
 A headless, virtualized React table for large datasets.
 
-## Philosophy
+## Guiding Principles
 
-**DuckDB-powered, Mosaic-native.** DuckDB-WASM is the query engine — SQL runs in-browser with zero server. The data layer uses [Mosaic](https://uwdata.github.io/mosaic/) natively for seamless coordination between views. 
+**DuckDB-powered, visualization-friendly** DuckDB-WASM is the in-browser store and query engine. The data layer uses [Mosaic](https://uwdata.github.io/mosaic/) natively, enabling seamless coordination between views and making it a first-class partner for visualization libraries.
 
-**React-idiomatic surface, performance-pragmatic internals.** You write normal React. Under the hood, scroll and positioning bypass React's render cycle for 60fps. These optimizations are invisible.
+**React-idiomatic surface with performant internals.** You write normal React. Under the hood, scroll and positioning bypass React's render cycle for 60fps. These optimizations are invisible.
 
 **Composable, not configurable.** No boolean flags. Behaviors are opt-in by using the relevant hook or component.
 

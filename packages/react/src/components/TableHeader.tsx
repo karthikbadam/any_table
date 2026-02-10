@@ -1,6 +1,5 @@
 import React from 'react';
 import { useLayoutContext } from '../context/LayoutContext';
-import { useScrollContext } from '../context/ScrollContext';
 import type { ResolvedColumn } from '@any_table/core';
 
 export interface TableHeaderProps {
@@ -11,8 +10,6 @@ export interface TableHeaderProps {
 
 export function TableHeader({ children, className, style }: TableHeaderProps) {
   const layout = useLayoutContext();
-  const scroll = useScrollContext();
-  const scrollLeft = scroll?.scrollLeft ?? 0;
 
   return (
     <div
@@ -23,7 +20,7 @@ export function TableHeader({ children, className, style }: TableHeaderProps) {
         top: 0,
         zIndex: 2,
         overflow: 'hidden',
-        width: '100%',
+        width: layout.totalWidth,
         ...style,
       }}
     >
@@ -33,7 +30,6 @@ export function TableHeader({ children, className, style }: TableHeaderProps) {
           display: 'flex',
           position: 'relative',
           width: layout.totalWidth,
-          transform: `translateX(${-scrollLeft}px)`,
         }}
       >
         {children({ columns: layout.resolved })}

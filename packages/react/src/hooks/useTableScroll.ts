@@ -25,7 +25,7 @@ export interface UseTableScrollOptions {
 export function useTableScroll(options: UseTableScrollOptions): TableScroll {
   const { data, layout, overscan = 10, containerRef } = options;
   const { totalRows, setWindow } = data;
-  const { rowHeight, totalWidth } = layout;
+  const { rowHeight } = layout;
 
   const rafIdRef = useRef<number | null>(null);
   const fetchWindowRef = useRef<FetchWindow | null>(null);
@@ -40,10 +40,6 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     return Math.max(1, containerRef.current?.clientHeight ?? 0);
   }, [containerRef]);
 
-  const getViewportWidth = useCallback(() => {
-    return containerRef.current?.clientWidth ?? 0;
-  }, [containerRef]);
-
   const updateFromNativeScroll = useCallback(() => {
     rafIdRef.current = null;
 
@@ -51,13 +47,12 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     if (!el || rowHeight <= 0) return;
 
     const contentScrollTop = Math.max(0, el.scrollTop);
-    const contentScrollLeft = el.scrollLeft;
 
     const state = {
       scrollTop: contentScrollTop,
-      scrollLeft: contentScrollLeft,
+      scrollLeft: 0,
       viewportHeight: getViewportHeight(),
-      viewportWidth: getViewportWidth(),
+      viewportWidth: 0,
       rowHeight,
       totalRows,
     };
@@ -82,7 +77,6 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     overscan,
     setWindow,
     getViewportHeight,
-    getViewportWidth,
   ]);
 
   const scheduleUpdate = useCallback(() => {
@@ -112,8 +106,6 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     };
   }, [containerRef]);
 
-  const viewportRef = useCallback(() => {}, []);
-
   // Refresh virtualization when dimensions/data change.
   useEffect(() => {
     if (rowHeight > 0) {
@@ -128,11 +120,9 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     const el = containerRef.current;
     if (!el) return;
     const maxScrollTop = Math.max(0, totalHeight - el.clientHeight);
-    const maxScrollLeft = Math.max(0, totalWidth - el.clientWidth);
     if (el.scrollTop > maxScrollTop) el.scrollTop = maxScrollTop;
-    if (el.scrollLeft > maxScrollLeft) el.scrollLeft = maxScrollLeft;
     scheduleUpdate();
-  }, [containerRef, totalHeight, totalWidth, scheduleUpdate]);
+  }, [containerRef, totalHeight, scheduleUpdate]);
 
   useEffect(() => {
     return () => {
@@ -165,7 +155,6 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
   return {
     scrollTop,
     visibleRowRange,
-    viewportRef,
     scrollToRow,
     scrollToTop,
   };

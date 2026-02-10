@@ -57,7 +57,6 @@ export function TableViewport({ children, className, style }: TableViewportProps
   // Defines native scrollable content size while rendering only the visible row subset.
   return (
     <div
-      ref={scroll?.viewportRef}
       role="rowgroup"
       className={className}
       style={{

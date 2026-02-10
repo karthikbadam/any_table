@@ -123,7 +123,7 @@ function RubricsTable() {
         ref={containerRef}
         style={{
           width: "100%",
-          height: "calc(100dvh - 120px)",
+          height: "calc(100dvh - 150px)",
           position: "relative",
           border: "1px solid var(--border)",
           borderRadius: 6,
@@ -195,8 +195,6 @@ function RubricsTable() {
               ))
             }
           </Table.Viewport>
-          {/* <Table.VerticalScrollbar />
-          <Table.HorizontalScrollbar /> */}
         </Table.Root>
       </div>
     </>

@@ -44,8 +44,6 @@ export { TableViewport, type VisibleRow } from './components/TableViewport';
 export { TableRow, type VisibleCell } from './components/TableRow';
 export { TableCell } from './components/TableCell';
 export { SortTrigger } from './components/SortTrigger';
-export { VerticalScrollbar } from './components/VerticalScrollbar';
-export { HorizontalScrollbar } from './components/HorizontalScrollbar';
 
 // Cell renderers
 export { TextCell } from './components/cells/TextCell';

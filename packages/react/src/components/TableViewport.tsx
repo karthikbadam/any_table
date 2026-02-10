@@ -65,7 +65,7 @@ export function TableViewport({ children, className, style }: TableViewportProps
         ...(scroll
           ? {
               height: totalHeight,
-              width: layout.totalWidth,
+              width: layout.totalWidth > 0 ? layout.totalWidth : '100%',
               flex: '0 0 auto' as const,
             }
           : {

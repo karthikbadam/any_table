@@ -1,6 +1,5 @@
 import React from 'react';
 import { useLayoutContext } from '../context/LayoutContext';
-import { useScrollContext } from '../context/ScrollContext';
 import type { VisibleRow } from './TableViewport';
 
 export interface VisibleCell {
@@ -19,8 +18,6 @@ export interface TableRowProps {
 
 export function TableRow({ row, children, className, style }: TableRowProps) {
   const layout = useLayoutContext();
-  const scroll = useScrollContext();
-  const scrollLeft = scroll?.scrollLeft ?? 0;
 
   const cells: VisibleCell[] = layout.resolved.map((col) => ({
     column: col.key,
@@ -42,7 +39,7 @@ export function TableRow({ row, children, className, style }: TableRowProps) {
         height: layout.rowHeight,
         display: 'flex',
         overflow: 'hidden',
-        transform: `translate3d(${-scrollLeft}px, ${row.top}px, 0)`,
+        transform: `translate3d(0, ${row.top}px, 0)`,
         ...style,
       }}
     >

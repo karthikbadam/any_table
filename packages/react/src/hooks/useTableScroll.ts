@@ -1,17 +1,16 @@
 import {
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-  type RefObject,
-  type CSSProperties,
-} from 'react';
-import {
-  computeVisibleRange,
   computeFetchWindow,
+  computeVisibleRange,
   getTotalHeight,
   type FetchWindow,
 } from '@any_table/core';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject
+} from 'react';
 import type { TableData } from '../context/DataContext';
 import type { ColumnLayout } from '../context/LayoutContext';
 import type { TableScroll } from '../context/ScrollContext';
@@ -24,20 +23,16 @@ export interface UseTableScrollOptions {
 }
 
 export function useTableScroll(options: UseTableScrollOptions): TableScroll {
-  const { data, layout, overscan = 5, containerRef } = options;
+  const { data, layout, overscan = 10, containerRef } = options;
   const { totalRows, setWindow } = data;
   const { rowHeight, totalWidth } = layout;
 
   const rafIdRef = useRef<number | null>(null);
-  const bindRetryRafRef = useRef<number | null>(null);
   const fetchWindowRef = useRef<FetchWindow | null>(null);
-  const boundContainerRef = useRef<HTMLElement | null>(null);
-  const unbindContainerRef = useRef<(() => void) | null>(null);
-  const syncFromElementRef = useRef<() => void>(() => {});
+  const scheduleUpdateRef = useRef<() => void>(() => {});
 
   const [visibleRowRange, setVisibleRowRange] = useState({ start: 0, end: 0 });
   const [scrollTop, setScrollTop] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const totalHeight = getTotalHeight(totalRows, rowHeight);
 
@@ -48,14 +43,6 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
   const getViewportWidth = useCallback(() => {
     return containerRef.current?.clientWidth ?? 0;
   }, [containerRef]);
-
-  const clampScrollLeft = useCallback(
-    (value: number) => {
-      const max = Math.max(0, totalWidth - getViewportWidth());
-      return Math.max(0, Math.min(max, value));
-    },
-    [totalWidth, getViewportWidth],
-  );
 
   const updateFromNativeScroll = useCallback(() => {
     rafIdRef.current = null;
@@ -82,7 +69,6 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     });
 
     setScrollTop(contentScrollTop);
-    setScrollLeft(contentScrollLeft);
 
     const newWindow = computeFetchWindow(state, fetchWindowRef.current, overscan);
     if (newWindow) {
@@ -104,85 +90,38 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
       rafIdRef.current = requestAnimationFrame(updateFromNativeScroll);
     }
   }, [updateFromNativeScroll]);
+  scheduleUpdateRef.current = scheduleUpdate;
 
-  const syncFromElement = useCallback(() => {
-    scheduleUpdate();
-  }, [scheduleUpdate]);
-  syncFromElementRef.current = syncFromElement;
-
-  const bindContainer = useCallback(() => {
+  useEffect(() => {
     const el = containerRef.current;
-    if (!el) {
-      if (bindRetryRafRef.current == null) {
-        bindRetryRafRef.current = requestAnimationFrame(() => {
-          bindRetryRafRef.current = null;
-          bindContainer();
-        });
-      }
-      return;
-    }
-    if (bindRetryRafRef.current != null) {
-      cancelAnimationFrame(bindRetryRafRef.current);
-      bindRetryRafRef.current = null;
-    }
-    if (boundContainerRef.current === el) return;
-
-    unbindContainerRef.current?.();
-    boundContainerRef.current = el;
+    if (!el) return;
 
     const prevOverflow = el.style.overflow;
-    const prevWebkitOverflowScrolling = el.style.getPropertyValue(
-      'webkit-overflow-scrolling',
-    );
-
     el.style.overflow = 'auto';
-    el.style.setProperty('webkit-overflow-scrolling', 'touch');
 
-    const onScroll = () => syncFromElementRef.current();
+    const onScroll = () => scheduleUpdateRef.current();
     el.addEventListener('scroll', onScroll, { passive: true });
 
-    unbindContainerRef.current = () => {
+    onScroll();
+    const initId = requestAnimationFrame(onScroll);
+
+    return () => {
+      cancelAnimationFrame(initId);
       el.removeEventListener('scroll', onScroll);
       el.style.overflow = prevOverflow;
-      if (prevWebkitOverflowScrolling) {
-        el.style.setProperty(
-          'webkit-overflow-scrolling',
-          prevWebkitOverflowScrolling,
-        );
-      } else {
-        el.style.removeProperty('webkit-overflow-scrolling');
-      }
-      if (boundContainerRef.current === el) {
-        boundContainerRef.current = null;
-      }
     };
-
-    syncFromElementRef.current();
-    requestAnimationFrame(() => syncFromElementRef.current());
   }, [containerRef]);
 
-  const viewportRef = useCallback(
-    (el: HTMLElement | null) => {
-      if (el) {
-        bindContainer();
-      }
-    },
-    [bindContainer],
-  );
-
-  // Fallback binding path in case viewportRef runs before containerRef is assigned.
-  useEffect(() => {
-    bindContainer();
-  }, [bindContainer]);
+  const viewportRef = useCallback(() => {}, []);
 
   // Refresh virtualization when dimensions/data change.
   useEffect(() => {
     if (rowHeight > 0) {
-      syncFromElement();
-      const id = requestAnimationFrame(syncFromElement);
+      scheduleUpdate();
+      const id = requestAnimationFrame(scheduleUpdate);
       return () => cancelAnimationFrame(id);
     }
-  }, [rowHeight, totalRows, syncFromElement]);
+  }, [rowHeight, totalRows, scheduleUpdate]);
 
   // Keep DOM scroll in bounds when content dimensions change.
   useEffect(() => {
@@ -192,16 +131,11 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
     const maxScrollLeft = Math.max(0, totalWidth - el.clientWidth);
     if (el.scrollTop > maxScrollTop) el.scrollTop = maxScrollTop;
     if (el.scrollLeft > maxScrollLeft) el.scrollLeft = maxScrollLeft;
-    syncFromElement();
-  }, [containerRef, totalHeight, totalWidth, syncFromElement]);
+    scheduleUpdate();
+  }, [containerRef, totalHeight, totalWidth, scheduleUpdate]);
 
   useEffect(() => {
     return () => {
-      unbindContainerRef.current?.();
-      if (bindRetryRafRef.current != null) {
-        cancelAnimationFrame(bindRetryRafRef.current);
-        bindRetryRafRef.current = null;
-      }
       if (rafIdRef.current != null) {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
@@ -216,40 +150,23 @@ export function useTableScroll(options: UseTableScrollOptions): TableScroll {
       const maxScrollTop = Math.max(0, totalHeight - el.clientHeight);
       const target = index * rowHeight;
       el.scrollTop = Math.max(0, Math.min(maxScrollTop, target));
-      syncFromElement();
+      scheduleUpdate();
     },
-    [containerRef, rowHeight, totalHeight, syncFromElement],
+    [containerRef, rowHeight, totalHeight, scheduleUpdate],
   );
 
   const scrollToTop = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
     el.scrollTop = 0;
-    syncFromElement();
-  }, [containerRef, syncFromElement]);
-
-  const scrollToX = useCallback(
-    (x: number) => {
-      const el = containerRef.current;
-      if (!el) return;
-      el.scrollLeft = clampScrollLeft(x);
-      syncFromElement();
-    },
-    [containerRef, clampScrollLeft, syncFromElement],
-  );
-
-  const scrollContainerStyle: CSSProperties = {
-    position: 'relative',
-  };
+    scheduleUpdate();
+  }, [containerRef, scheduleUpdate]);
 
   return {
     scrollTop,
-    scrollLeft,
     visibleRowRange,
     viewportRef,
-    scrollContainerStyle,
     scrollToRow,
-    scrollToX,
     scrollToTop,
   };
 }

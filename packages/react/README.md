@@ -70,8 +70,6 @@ function OrdersTable() {
             ))
           }
         </Table.Viewport>
-        <Table.VerticalScrollbar />
-        <Table.HorizontalScrollbar />
       </Table.Root>
     </div>
   );

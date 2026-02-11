@@ -12,7 +12,6 @@ export interface SelectionCheckboxProps {
 
 export function SelectionCheckbox({ header, row, className, style }: SelectionCheckboxProps) {
   const selection = useSelectionContext();
-
   if (!selection) return null;
 
   if (header) {

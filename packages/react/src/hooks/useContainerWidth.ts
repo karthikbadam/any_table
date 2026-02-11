@@ -22,7 +22,8 @@ export function useContainerWidth(
     if (!el) return;
 
     const measure = () => {
-      const rect = el.getBoundingClientRect();
+      const width = el.clientWidth;
+      const height = el.clientHeight;
       const rootFs = parseFloat(
         getComputedStyle(document.documentElement).fontSize,
       );
@@ -30,16 +31,16 @@ export function useContainerWidth(
 
       setMeasurements((prev) => {
         if (
-          prev.width === rect.width &&
-          prev.height === rect.height &&
+          prev.width === width &&
+          prev.height === height &&
           prev.rootFontSize === rootFs &&
           prev.tableFontSize === tableFs
         ) {
           return prev;
         }
         return {
-          width: rect.width,
-          height: rect.height,
+          width,
+          height,
           rootFontSize: rootFs,
           tableFontSize: tableFs,
         };

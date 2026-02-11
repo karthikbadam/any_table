@@ -51,16 +51,12 @@ export function TableRow({ row, children, className, style }: TableRowProps) {
     };
   });
 
-  const handleClick = selection
-    ? () => selection.toggle(rowKey)
-    : undefined;
-
   return (
     <div
       role="row"
       aria-rowindex={row.index + 1}
       aria-selected={selection ? isSelected : undefined}
-      className={`${className ?? ''}${isSelected ? ' at-row-selected' : ''}`}
+      className={className}
       style={{
         position: 'absolute',
         top: 0,
@@ -70,10 +66,8 @@ export function TableRow({ row, children, className, style }: TableRowProps) {
         display: 'flex',
         overflow: 'hidden',
         transform: `translate3d(0, ${row.top}px, 0)`,
-        cursor: selection ? 'pointer' : undefined,
         ...style,
       }}
-      onClick={handleClick}
     >
       {children({ cells })}
     </div>

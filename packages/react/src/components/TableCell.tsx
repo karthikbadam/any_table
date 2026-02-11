@@ -7,6 +7,7 @@ export interface TableCellProps {
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 export function TableCell({
@@ -16,11 +17,13 @@ export function TableCell({
   children,
   className,
   style,
+  onClick,
 }: TableCellProps) {
   return (
     <div
       role="gridcell"
       className={className}
+      onClick={onClick}
       style={{
         position: 'absolute',
         left: offset,

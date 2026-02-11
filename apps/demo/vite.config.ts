@@ -5,12 +5,6 @@ export default defineConfig({
   base: process.env.GITHUB_PAGES ? '/any_table/' : '/',
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['@duckdb/duckdb-wasm'],
-  },
-  server: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    },
-  },
+    exclude: ['@duckdb/duckdb-wasm']
+  }
 });

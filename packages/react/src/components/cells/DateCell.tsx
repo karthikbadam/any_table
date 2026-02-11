@@ -8,6 +8,8 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 
 export interface DateCellProps {
   value: unknown;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }

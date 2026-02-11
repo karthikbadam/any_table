@@ -3,7 +3,6 @@ import type {
   SelectQuery,
   ColumnRefNode,
   CastNode,
-  WindowNode,
   OrderByNode,
   ExprValue,
 } from '@uwdata/mosaic-sql';
@@ -23,7 +22,6 @@ export interface RowsSqlApi {
   Query: { from(table: string): SelectQuery };
   column(name: string): ColumnRefNode;
   cast(expr: ColumnRefNode, type: string): CastNode;
-  row_number(): WindowNode;
   desc(expr: ExprValue): OrderByNode;
 }
 
@@ -54,15 +52,12 @@ export function createRowsClient(
   config: RowsClientConfig,
   filterSelection?: Selection,
 ): RowsClient {
-  const { Query, column, cast, row_number, desc } = sqlApi;
-  const schemaMap = new Map<string, ColumnSchema>();
-  for (const s of config.columns) {
-    schemaMap.set(s.name, s);
-  }
-
+  const { Query, column, cast, desc } = sqlApi;
   let currentSort: Sort | null = null;
   let currentOffset = 0;
   let currentLimit = 100;
+  // Capture offset at query time so it's stable when queryResult arrives.
+  let queryOffset = 0;
 
   const client = new MosaicClientClass(filterSelection);
 
@@ -74,7 +69,10 @@ export function createRowsClient(
   });
 
   client.query = (filter?: any) => {
-    const select: Record<string, ColumnRefNode | CastNode | WindowNode> = {};
+    // Snapshot the offset at query time — currentOffset may change before queryResult.
+    queryOffset = currentOffset;
+
+    const select: Record<string, ColumnRefNode | CastNode> = {};
 
     for (const col of config.columns) {
       const descriptor = getCastDescriptor(col);
@@ -85,21 +83,11 @@ export function createRowsClient(
       }
     }
 
-    // Stable positional ID via window function
-    const sortFields = normalizeSortFields(currentSort);
-    let rn: WindowNode = row_number();
-    if (sortFields && sortFields.length > 0) {
-      const orderExprs = sortFields.map((sf) =>
-        sf.desc ? desc(column(sf.column)) : column(sf.column),
-      );
-      rn = row_number().orderby(...orderExprs);
-    }
-    select['__oid'] = rn;
-
     let q = Query.from(config.tableName)
       .select(select)
       .where(filter);
 
+    const sortFields = normalizeSortFields(currentSort);
     if (sortFields && sortFields.length > 0) {
       q = q.orderby(
         ...sortFields.map((sf) =>
@@ -121,16 +109,10 @@ export function createRowsClient(
       for (const col of config.columns) {
         parsed[col.name] = parseValue(record[col.name], col);
       }
-      parsed['__oid'] = Number(record['__oid']);
       rows.push(parsed);
     }
 
-    const firstOid = Number(rows[0]?.__oid);
-    const resultOffset =
-      Number.isFinite(firstOid) && firstOid > 0
-        ? firstOid - 1
-        : currentOffset;
-    config.onResult(rows, resultOffset);
+    config.onResult(rows, queryOffset);
     return client;
   };
 

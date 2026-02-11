@@ -4,6 +4,8 @@ const formatter = new Intl.NumberFormat();
 
 export interface NumberCellProps {
   value: unknown;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }

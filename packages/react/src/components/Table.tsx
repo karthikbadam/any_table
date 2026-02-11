@@ -5,6 +5,7 @@ import { TableViewport } from './TableViewport';
 import { TableRow } from './TableRow';
 import { TableCell } from './TableCell';
 import { SortTrigger } from './SortTrigger';
+import { SelectionCheckbox } from './SelectionCheckbox';
 
 export const Table = {
   Root: TableRoot,
@@ -14,4 +15,5 @@ export const Table = {
   Row: TableRow,
   Cell: TableCell,
   SortTrigger: SortTrigger,
+  SelectionCheckbox: SelectionCheckbox,
 } as const;

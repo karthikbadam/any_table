@@ -2,6 +2,8 @@ import React from 'react';
 
 export interface BooleanCellProps {
   value: unknown;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }

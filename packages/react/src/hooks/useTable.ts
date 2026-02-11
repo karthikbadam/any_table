@@ -4,9 +4,13 @@ import type { ColumnDef, Sort, RowHeightConfig, RowRecord } from '@any_table/cor
 import { useTableData } from './useTableData';
 import { useTableLayout } from './useTableLayout';
 import { useTableScroll } from './useTableScroll';
+import { useCellExpansion, type UseCellExpansionOptions } from './useCellExpansion';
+import { useRowSelection, type UseRowSelectionOptions } from './useRowSelection';
 import type { TableData } from '../context/DataContext';
 import type { ColumnLayout } from '../context/LayoutContext';
 import type { TableScroll } from '../context/ScrollContext';
+import type { ExpansionContextValue } from '../context/ExpansionContext';
+import type { SelectionContextValue } from '../context/SelectionContext';
 
 // ── Option types ─────────────────────────────────────────────────
 
@@ -29,12 +33,16 @@ export interface UseTableOptions {
   // Callbacks
   onSortChange?: (sort: Sort | null) => void;
 
+  // Expansion
+  expansion?: boolean | UseCellExpansionOptions;
+
+  // Selection
+  selection?: boolean | UseRowSelectionOptions;
+
   // Post-v0.1 (accepted for forward compat, ignored)
-  selection?: unknown;
   pinning?: unknown;
   reorder?: boolean;
   resize?: boolean;
-  expansion?: unknown;
   groupBy?: string | string[];
   aggregates?: Record<string, unknown>;
   onSelectionChange?: unknown;
@@ -51,9 +59,9 @@ export interface UseTableReturn {
     layout: ColumnLayout;
     scroll: TableScroll | null;
     pagination: null;
-    selection: null;
+    selection: SelectionContextValue | null;
     pinning: null;
-    expansion: null;
+    expansion: ExpansionContextValue | null;
     grouping: null;
     columns: ColumnDef[];
   };
@@ -61,11 +69,11 @@ export interface UseTableReturn {
   layout: ColumnLayout;
   scroll: TableScroll | null;
   pagination: null;
-  selection: null;
+  selection: SelectionContextValue | null;
   pinning: null;
   columnOrder: null;
   resize: null;
-  expansion: null;
+  expansion: ExpansionContextValue | null;
   grouping: null;
 }
 
@@ -82,6 +90,8 @@ export function useTable(options: UseTableOptions): UseTableReturn {
     scroll: scrollOpt,
     rowHeightConfig,
     onSortChange,
+    expansion: expansionOpt,
+    selection: selectionOpt,
   } = options;
 
   // Stabilize column keys — avoids new array identity on every render
@@ -125,14 +135,26 @@ export function useTable(options: UseTableOptions): UseTableReturn {
     containerRef,
   });
 
+  // Expansion
+  const expansionOptions: UseCellExpansionOptions =
+    typeof expansionOpt === 'object' ? expansionOpt : {};
+  const expansionValue = useCellExpansion(expansionOptions);
+  const expansion = expansionOpt ? expansionValue : null;
+
+  // Selection
+  const selectionOptions: UseRowSelectionOptions =
+    typeof selectionOpt === 'object' ? selectionOpt : {};
+  const selectionValue = useRowSelection(selectionOptions);
+  const selection = selectionOpt ? selectionValue : null;
+
   const rootProps = {
     data,
     layout,
     scroll,
     pagination: null as null,
-    selection: null as null,
+    selection,
     pinning: null as null,
-    expansion: null as null,
+    expansion,
     grouping: null as null,
     columns,
   };
@@ -143,11 +165,11 @@ export function useTable(options: UseTableOptions): UseTableReturn {
     layout,
     scroll,
     pagination: null,
-    selection: null,
+    selection,
     pinning: null,
     columnOrder: null,
     resize: null,
-    expansion: null,
+    expansion,
     grouping: null,
   };
 }

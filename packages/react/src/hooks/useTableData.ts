@@ -23,7 +23,7 @@ export interface UseTableDataOptions {
 }
 
 export function useTableData(options: UseTableDataOptions): TableData {
-  const { table, rows: arrayRows, rowKey, filter } = options;
+  const { table, rows: arrayRows, filter } = options;
   const coordinator = useMosaicCoordinator();
 
   // Stabilize columns array — only recompute when the actual column names change
@@ -79,7 +79,7 @@ export function useTableData(options: UseTableDataOptions): TableData {
         if (cancelled) return;
 
         const { MosaicClient, queryFieldInfo } = mosaicCore;
-        const { Query, column, cast, row_number, desc, count } = mosaicSql;
+        const { Query, column, cast, desc, count } = mosaicSql;
 
         const schemaResult = await fetchSchema(
           coordinator!,
@@ -116,17 +116,12 @@ export function useTableData(options: UseTableDataOptions): TableData {
 
         const rowsClient = createRowsClient(
           MosaicClient,
-          { Query, column, cast, row_number, desc },
+          { Query, column, cast, desc },
           {
             tableName: table!,
             columns: filteredSchema,
             onResult: (rows: RowRecord[], offset: number) => {
-              const firstOid = Number(rows[0]?.__oid);
-              const startIndex =
-                Number.isFinite(firstOid) && firstOid > 0
-                  ? firstOid - 1
-                  : Math.max(0, offset);
-              model.mergeRows(startIndex, rows);
+              model.mergeRows(offset, rows);
               setIsLoading(false);
               setVersion((v) => v + 1);
             },
@@ -198,6 +193,7 @@ export function useTableData(options: UseTableDataOptions): TableData {
         const client = rowsClientRef.current;
         if (client && connectedRef.current) {
           client.sort = newSort;
+          client.fetchWindow(0, 15);
           setIsLoading(true);
           modelRef.current.clear();
           setVersion((v) => v + 1);

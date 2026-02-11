@@ -4,17 +4,18 @@ import { DataContext, type TableData } from '../context/DataContext';
 import { LayoutContext, type ColumnLayout } from '../context/LayoutContext';
 import { ScrollContext, type TableScroll } from '../context/ScrollContext';
 import { InteractionContext } from '../context/InteractionContext';
+import { ExpansionContext, type ExpansionContextValue } from '../context/ExpansionContext';
+import { SelectionContext, type SelectionContextValue } from '../context/SelectionContext';
 
 export interface TableRootProps {
   data: TableData;
   layout: ColumnLayout;
   scroll?: TableScroll | null;
   columns: ColumnDef[];
-  // Post-v0.1 props (accepted, unused)
   pagination?: unknown;
-  selection?: unknown;
+  selection?: SelectionContextValue | null;
   pinning?: unknown;
-  expansion?: unknown;
+  expansion?: ExpansionContextValue | null;
   grouping?: unknown;
   children: React.ReactNode;
   className?: string;
@@ -26,6 +27,8 @@ export function TableRoot({
   layout,
   scroll,
   columns,
+  expansion,
+  selection,
   children,
   className,
   style,
@@ -35,7 +38,7 @@ export function TableRoot({
     setSort: data.setSort,
   };
 
-  return (
+  let content = (
     <DataContext.Provider value={data}>
       <LayoutContext.Provider value={layout}>
         <ScrollContext.Provider value={scroll ?? null}>
@@ -59,4 +62,24 @@ export function TableRoot({
       </LayoutContext.Provider>
     </DataContext.Provider>
   );
+
+  // Wrap with expansion provider if provided
+  if (expansion) {
+    content = (
+      <ExpansionContext.Provider value={expansion}>
+        {content}
+      </ExpansionContext.Provider>
+    );
+  }
+
+  // Wrap with selection provider if provided
+  if (selection) {
+    content = (
+      <SelectionContext.Provider value={selection}>
+        {content}
+      </SelectionContext.Provider>
+    );
+  }
+
+  return content;
 }

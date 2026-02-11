@@ -5,34 +5,66 @@
 }
 
 :root {
-  color-scheme: dark;
-  --bg: #0d1117;
-  --fg: #e6edf6;
-  --muted-fg: #9aa8bb;
-  --surface: #161b22;
-  --surface-2: #1c2129;
-  --surface-3: #242b35;
-  --border: #2d3640;
-  --border-strong: #445469;
-  --accent: #7db7ff;
-  --good-bg: #113426;
-  --good-fg: #81d6a6;
-  --warn-bg: #3f3411;
-  --warn-fg: #f3d26f;
-  --bad-bg: #421919;
-  --bad-fg: #f5a2a2;
+  color-scheme: light dark;
+  --bg: #f7f8fa;
+  --fg: #14171c;
+  --muted-fg: #5b6470;
+  --surface: #ffffff;
+  --surface-2: #f3f5f7;
+  --surface-3: #eef1f4;
+  --border: #d8dee7;
+  --border-strong: #c2cbd6;
+  --accent: #0a66d1;
+  --good-bg: #dcfce7;
+  --good-fg: #166534;
+  --warn-bg: #fef9c3;
+  --warn-fg: #854d0e;
+  --bad-bg: #fee2e2;
+  --bad-fg: #991b1b;
 
   /* JSON syntax colors */
-  --json-key: #7db7ff;
-  --json-string: #81d6a6;
-  --json-number: #f3d26f;
-  --json-boolean: #c4b5fd;
+  --json-key: #0a66d1;
+  --json-string: #16743a;
+  --json-number: #b45309;
+  --json-boolean: #7c3aed;
   --json-null: #6b7280;
-  --json-punctuation: #9aa8bb;
+  --json-punctuation: #6b7280;
 
   /* Selection */
-  --selected-bg: #2a1f4e;
-  --selected-border: #a78bfa;
+  --selected-bg: #e0edff;
+  --selected-border: #0a66d1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #e6edf6;
+    --muted-fg: #9aa8bb;
+    --surface: #161b22;
+    --surface-2: #1c2129;
+    --surface-3: #242b35;
+    --border: #2d3640;
+    --border-strong: #445469;
+    --accent: #7db7ff;
+    --good-bg: #113426;
+    --good-fg: #81d6a6;
+    --warn-bg: #3f3411;
+    --warn-fg: #f3d26f;
+    --bad-bg: #421919;
+    --bad-fg: #f5a2a2;
+
+    /* JSON syntax colors */
+    --json-key: #7db7ff;
+    --json-string: #81d6a6;
+    --json-number: #f3d26f;
+    --json-boolean: #c4b5fd;
+    --json-null: #6b7280;
+    --json-punctuation: #9aa8bb;
+
+    /* Selection */
+    --selected-bg: #2a1f4e;
+    --selected-border: #a78bfa;
+  }
 }
 
 body {
@@ -143,7 +175,7 @@ dialog:focus {
   padding: 1px 5px;
   border-radius: 3px;
   background: var(--accent);
-  color: #0d1117;
+  color: var(--surface);
   margin-left: 4px;
   position: relative;
   top: -1px;

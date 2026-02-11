@@ -9,6 +9,7 @@ const pill: React.CSSProperties = {
   padding: "4px 10px",
   borderRadius: 4,
   background: "var(--surface-2)",
+  border: "1px solid var(--border)",
   fontSize: "0.7rem",
   fontFamily: "SF Mono, Menlo, monospace",
   color: "var(--muted-fg)",

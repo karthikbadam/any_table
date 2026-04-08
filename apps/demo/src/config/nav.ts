@@ -24,8 +24,8 @@ export const categories: NavCategory[] = [
       {
         id: "custom-cells",
         title: "Custom Cells",
-        description: "Build custom cell renderers for rich data types.",
-        enabled: false,
+        description: "Custom cell renderers including inline sparkline charts, colored badges, and status indicators. Uses local data with no DuckDB dependency.",
+        enabled: true,
       },
     ],
   },
@@ -48,8 +48,8 @@ export const categories: NavCategory[] = [
       {
         id: "search",
         title: "Search",
-        description: "Full-text search with highlighted matches.",
-        enabled: false,
+        description: "Full-text search over 11K rows with three modes: contains (ILIKE), exact match, and regex. Powered by DuckDB SQL filtering via Mosaic Selection.",
+        enabled: true,
       },
     ],
   },

@@ -397,4 +397,102 @@ export function SearchDemo() {
     </>
   );
 }`,
+
+  "cross-filtering": `import type { ColumnDef, Selection } from "@any_table/react";
+import { Table, TextCell, useMosaicCoordinator, useTable } from "@any_table/react";
+import { useEffect, useRef, useState } from "react";
+import {
+  MosaicClient,
+  Selection as MosaicSelection,
+  clausePoint,
+} from "@uwdata/mosaic-core";
+import { Query, column, count, desc } from "@uwdata/mosaic-sql";
+
+// Hook: aggregate query that re-runs when the crossfilter changes
+function useGroupByData(table: string, col: string, filter: Selection) {
+  const coordinator = useMosaicCoordinator();
+  const [data, setData] = useState<{ value: string; count: number }[]>([]);
+
+  useEffect(() => {
+    if (!coordinator) return;
+    const client = new MosaicClient(filter);
+    client.query = (f: any) =>
+      Query.from(table)
+        .select({ value: column(col), count: count() })
+        .where(f)
+        .groupby(column(col))
+        .orderby(desc(count()));
+    client.queryResult = (result: any) => {
+      setData(result.toArray().map((r: any) => ({
+        value: String(r.value ?? ""),
+        count: Number(r.count ?? 0),
+      })));
+      return client;
+    };
+    coordinator.connect(client);
+    return () => coordinator.disconnect(client);
+  }, [coordinator, table, col, filter]);
+
+  return data;
+}
+
+// Bar chart that updates the shared crossfilter selection on click
+function FilterBar({ col, filter }: { col: string; filter: Selection }) {
+  const data = useGroupByData("open_rubrics", col, filter);
+  const [active, setActive] = useState<string | null>(null);
+  const src = useRef({ id: col });
+
+  const onClick = (value: string) => {
+    const next = active === value ? null : value;
+    setActive(next);
+    filter.update(clausePoint(column(col), next, { source: src.current }));
+  };
+
+  const max = Math.max(...data.map((d) => d.count));
+  return (
+    <div>
+      {data.map((d) => (
+        <button key={d.value} onClick={() => onClick(d.value)}
+          style={{ opacity: !active || active === d.value ? 1 : 0.3 }}>
+          <span>{d.value}</span>
+          <svg width={200} height={20}>
+            <rect width={(d.count / max) * 200} height={16} rx={3}
+              fill="var(--accent)" />
+          </svg>
+          <span>{d.count}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function CrossFilterDemo() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const filter = useRef(MosaicSelection.crossfilter()).current;
+
+  const table = useTable({
+    table: "open_rubrics",
+    columns: [
+      { key: "source", width: "6rem" },
+      { key: "winner", width: "2rem" },
+      { key: "instruction", flex: 3 },
+      { key: "rubric", flex: 2 },
+    ],
+    rowKey: "instruction",
+    containerRef,
+    filter,
+  });
+
+  return (
+    <>
+      <FilterBar col="winner" filter={filter} />
+      <FilterBar col="source" filter={filter} />
+      <div ref={containerRef}>
+        <Table.Root {...table.rootProps}>
+          {/* ... header + viewport same as other demos */}
+        </Table.Root>
+      </div>
+    </>
+  );
+}`,
 };

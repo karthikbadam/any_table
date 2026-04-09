@@ -42,8 +42,8 @@ export const categories: NavCategory[] = [
       {
         id: "cross-filtering",
         title: "Cross-Filtering",
-        description: "Coordinated Mosaic views driven by table selections.",
-        enabled: false,
+        description: "Two bar charts and a table share a Mosaic crossfilter Selection. Clicking a bar in one chart filters the other chart and the table — demonstrating coordinated multi-view interaction over DuckDB.",
+        enabled: true,
       },
       {
         id: "search",

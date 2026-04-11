@@ -1,11 +1,13 @@
-import type { ColumnDef, Selection } from "@any_table/react";
+import type { ColumnDef, Coordinator, Selection } from "@any_table/react";
 import {
   Table,
   TextCell,
   useMosaicCoordinator,
   useTable,
 } from "@any_table/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Selection as MosaicSelection } from "@uwdata/mosaic-core";
+import { sql } from "@uwdata/mosaic-sql";
+import { useEffect, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
@@ -17,113 +19,87 @@ interface BarDatum {
   count: number;
 }
 
-// ── useGroupByData: Mosaic client for aggregate queries ─────────
-
-function useGroupByData(
-  tableName: string,
-  groupCol: string,
-  filterSelection: Selection | null,
-) {
-  const coordinator = useMosaicCoordinator();
-  const [data, setData] = useState<BarDatum[]>([]);
-  const clientRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (!coordinator || !filterSelection) return;
-    let cancelled = false;
-
-    async function init() {
-      const [mosaicCore, mosaicSql] = await Promise.all([
-        import("@uwdata/mosaic-core"),
-        import("@uwdata/mosaic-sql"),
-      ]);
-      if (cancelled) return;
-
-      const { MosaicClient } = mosaicCore as any;
-      const { Query, column, count, desc } = mosaicSql as any;
-
-      const client = new MosaicClient(filterSelection);
-
-      client.query = (filter: any) => {
-        return Query.from(tableName)
-          .select({ value: column(groupCol), count: count() })
-          .where(filter)
-          .groupby(column(groupCol))
-          .orderby(desc(count()));
-      };
-
-      client.queryResult = (result: any) => {
-        const rows = result.toArray().map((r: any) => ({
-          value: String(r.value ?? ""),
-          count: Number(r.count ?? 0),
-        }));
-        if (!cancelled) setData(rows);
-        return client;
-      };
-
-      clientRef.current = client;
-      await coordinator!.connect(client);
-    }
-
-    init();
-
-    return () => {
-      cancelled = true;
-      if (clientRef.current && coordinator) {
-        coordinator.disconnect(clientRef.current);
-      }
-      clientRef.current = null;
-    };
-  }, [coordinator, tableName, groupCol, filterSelection]);
-
-  return data;
+interface FilterState {
+  winner: string | null;
+  source: string | null;
 }
 
-// ── FilterBar: SVG bar chart that cross-filters ─────────────────
+// ── SQL helpers ─────────────────────────────────────────────────
+
+function escapeSqlString(s: string): string {
+  return s.replace(/'/g, "''");
+}
+
+/**
+ * Build the WHERE clause for a bar chart, applying all filters
+ * EXCEPT the one matching the chart's own column (cross-filter self-exclusion).
+ */
+function buildChartWhere(ownCol: string, state: FilterState): string {
+  const parts: string[] = [];
+  if (ownCol !== "winner" && state.winner) {
+    parts.push(`"winner" = '${escapeSqlString(state.winner)}'`);
+  }
+  if (ownCol !== "source" && state.source) {
+    parts.push(`"source" = '${escapeSqlString(state.source)}'`);
+  }
+  return parts.length > 0 ? `WHERE ${parts.join(" AND ")}` : "";
+}
+
+// ── Bar chart: queries DuckDB directly via coordinator.query ────
 
 interface FilterBarProps {
   label: string;
-  tableName: string;
-  groupColumn: string;
-  filterSelection: Selection | null;
+  column: string;
+  state: FilterState;
+  active: string | null;
+  onToggle: (value: string) => void;
   colorMap?: Record<string, string>;
   defaultColor?: string;
 }
 
 function FilterBar({
   label,
-  tableName,
-  groupColumn,
-  filterSelection,
+  column,
+  state,
+  active,
+  onToggle,
   colorMap,
   defaultColor = "var(--accent, #3b82f6)",
 }: FilterBarProps) {
-  const data = useGroupByData(tableName, groupColumn, filterSelection);
-  const [activeValue, setActiveValue] = useState<string | null>(null);
-  const sourceRef = useRef({ id: `chart-${groupColumn}` });
+  const coordinator = useMosaicCoordinator();
+  const [data, setData] = useState<BarDatum[]>([]);
 
-  const handleClick = useCallback(
-    async (value: string) => {
-      if (!filterSelection) return;
+  useEffect(() => {
+    if (!coordinator) return;
+    let cancelled = false;
 
-      const [mosaicCore, mosaicSql] = await Promise.all([
-        import("@uwdata/mosaic-core"),
-        import("@uwdata/mosaic-sql"),
-      ]);
+    const where = buildChartWhere(column, state);
+    const sqlStr = `
+      SELECT "${column}" as value, COUNT(*) as cnt
+      FROM open_rubrics
+      ${where}
+      GROUP BY "${column}"
+      ORDER BY cnt DESC
+    `;
 
-      const { clausePoint } = mosaicCore as any;
-      const { column } = mosaicSql as any;
+    (async () => {
+      try {
+        const result = await (coordinator as Coordinator).query(sqlStr);
+        if (cancelled) return;
+        const rows: BarDatum[] = (result as any).toArray().map((r: any) => ({
+          value: String(r.value ?? ""),
+          count: Number(r.cnt ?? 0),
+        }));
+        setData(rows);
+      } catch (err) {
+        console.error("[CrossFilterDemo] bar chart query failed:", err);
+      }
+    })();
 
-      const next = activeValue === value ? null : value;
-      setActiveValue(next);
-
-      const clause = clausePoint(column(groupColumn), next, {
-        source: sourceRef.current,
-      });
-      filterSelection.update(clause);
-    },
-    [filterSelection, groupColumn, activeValue],
-  );
+    return () => {
+      cancelled = true;
+    };
+  }, [coordinator, column, state]);
 
   if (data.length === 0) {
     return (
@@ -134,11 +110,10 @@ function FilterBar({
   }
 
   const maxCount = Math.max(...data.map((d) => d.count));
-  const barHeight = 24;
-  const gap = 4;
   const labelWidth = 100;
   const countWidth = 50;
   const chartWidth = 220;
+  const barHeight = 24;
 
   return (
     <div>
@@ -154,16 +129,16 @@ function FilterBar({
       >
         {label}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {data.map((d) => {
-          const isActive = activeValue === null || activeValue === d.value;
+          const isActive = active === null || active === d.value;
           const barColor = colorMap?.[d.value] ?? defaultColor;
 
           return (
             <button
               key={d.value}
               type="button"
-              onClick={() => handleClick(d.value)}
+              onClick={() => onToggle(d.value)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -203,7 +178,7 @@ function FilterBar({
                   height={barHeight - 4}
                   rx={3}
                   fill={barColor}
-                  opacity={isActive ? 0.85 : 0.4}
+                  opacity={active === d.value ? 1 : 0.7}
                 />
               </svg>
               <span
@@ -280,22 +255,56 @@ const WINNER_COLORS: Record<string, string> = {
 
 export function CrossFilterDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [filterSelection, setFilterSelection] = useState<Selection | null>(
-    null,
-  );
 
-  // Create Selection.crossfilter() once
+  // React-managed cross-filter state.
+  const [filterState, setFilterState] = useState<FilterState>({
+    winner: null,
+    source: null,
+  });
+
+  // Shared Selection for the table. Created synchronously so useTable
+  // receives it on the first render and the container div renders
+  // immediately (fixing a measurement race with useContainerWidth).
+  const tableFilter = useRef<Selection>(
+    MosaicSelection.crossfilter() as unknown as Selection,
+  ).current;
+
+  // Whenever the React state changes, update the Selection for the table.
   useEffect(() => {
-    let cancelled = false;
-    import("@uwdata/mosaic-core").then((mod) => {
-      if (cancelled) return;
-      const sel = (mod as any).Selection.crossfilter();
-      setFilterSelection(sel);
+    const parts: unknown[] = [];
+    if (filterState.winner) {
+      parts.push(sql`"winner" = ${filterState.winner}`);
+    }
+    if (filterState.source) {
+      parts.push(sql`"source" = ${filterState.source}`);
+    }
+
+    let predicate: unknown = null;
+    if (parts.length === 1) {
+      predicate = parts[0];
+    } else if (parts.length === 2) {
+      predicate = sql`${parts[0] as any} AND ${parts[1] as any}`;
+    }
+
+    (tableFilter as any).update({
+      source: "cross-filter-state",
+      predicate,
     });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  }, [filterState, tableFilter]);
+
+  const handleToggleWinner = (value: string) => {
+    setFilterState((s) => ({
+      ...s,
+      winner: s.winner === value ? null : value,
+    }));
+  };
+
+  const handleToggleSource = (value: string) => {
+    setFilterState((s) => ({
+      ...s,
+      source: s.source === value ? null : value,
+    }));
+  };
 
   const table = useTable({
     table: "open_rubrics",
@@ -303,12 +312,8 @@ export function CrossFilterDemo() {
     rowKey: "instruction",
     containerRef,
     expansion: { expandedRowHeight: 300 },
-    filter: filterSelection ?? undefined,
+    filter: tableFilter,
   });
-
-  if (!filterSelection) {
-    return <p style={{ color: "var(--muted-fg)" }}>Initializing...</p>;
-  }
 
   return (
     <div className="demo-content">
@@ -322,16 +327,18 @@ export function CrossFilterDemo() {
       >
         <FilterBar
           label="Winner"
-          tableName="open_rubrics"
-          groupColumn="winner"
-          filterSelection={filterSelection}
+          column="winner"
+          state={filterState}
+          active={filterState.winner}
+          onToggle={handleToggleWinner}
           colorMap={WINNER_COLORS}
         />
         <FilterBar
           label="Source"
-          tableName="open_rubrics"
-          groupColumn="source"
-          filterSelection={filterSelection}
+          column="source"
+          state={filterState}
+          active={filterState.source}
+          onToggle={handleToggleSource}
           defaultColor="#06b6d4"
         />
       </div>

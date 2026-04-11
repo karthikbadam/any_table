@@ -1,6 +1,8 @@
 import type { ColumnDef, Selection } from "@any_table/react";
 import { Table, TextCell, useTable } from "@any_table/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Selection as MosaicSelection } from "@uwdata/mosaic-core";
+import { sql } from "@uwdata/mosaic-sql";
+import { useEffect, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
@@ -22,28 +24,32 @@ type SearchColumn = (typeof SEARCH_COLUMNS)[number];
 
 const TEXT_COLUMNS = ["instruction", "response_a", "response_b", "rubric", "source"];
 
+// Build a Mosaic-sql predicate (an ExprNode) from the search state.
+// Returns null when the query is empty.
 function buildPredicate(
   term: string,
   mode: SearchMode,
   column: SearchColumn,
-): string | null {
+): unknown {
   if (!term.trim()) return null;
 
-  const escaped = term.replace(/'/g, "''");
   const targets = column === "all" ? TEXT_COLUMNS : [column];
 
-  const clauses = targets.map((col) => {
+  // Build one sql fragment per column, OR them together via raw SQL.
+  const parts = targets.map((col) => {
     switch (mode) {
       case "contains":
-        return `"${col}" ILIKE '%${escaped}%'`;
+        return sql`"${col}" ILIKE ${"%" + term + "%"}`;
       case "exact":
-        return `"${col}" = '${escaped}'`;
+        return sql`"${col}" = ${term}`;
       case "regex":
-        return `regexp_matches("${col}", '${escaped}')`;
+        return sql`regexp_matches("${col}", ${term})`;
     }
   });
 
-  return clauses.join(" OR ");
+  if (parts.length === 1) return parts[0];
+  // For multiple columns, combine with OR using the sql tag.
+  return parts.reduce((acc, p) => sql`${acc} OR ${p}`);
 }
 
 // ── Search toolbar ──────────────────────────────────────────────
@@ -183,47 +189,28 @@ export function SearchDemo() {
   const [column, setColumn] = useState<SearchColumn>("all");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
+  // Create the crossfilter Selection synchronously — no async import.
+  // This ensures useTable receives the filter on the first render, and the
+  // container div is always rendered (so useContainerWidth can measure it).
+  const filterSelection = useRef<Selection>(
+    MosaicSelection.crossfilter() as unknown as Selection,
+  ).current;
+
   // Debounce the search query
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Create and manage the Mosaic Selection for filtering
-  const filterRef = useRef<Selection | null>(null);
-  const [filterReady, setFilterReady] = useState(false);
-
+  // Update the filter predicate when search changes. Passing predicate=null
+  // removes the clause from our source (see SelectionResolver.resolve).
   useEffect(() => {
-    let cancelled = false;
-    import("@uwdata/mosaic-core").then((mod) => {
-      if (cancelled) return;
-      const sel = (mod as any).Selection.crossfilter();
-      filterRef.current = sel;
-      setFilterReady(true);
+    const predicate = buildPredicate(debouncedQuery, mode, column);
+    (filterSelection as any).update({
+      source: "search",
+      predicate,
     });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Update the filter predicate when search changes
-  const updateFilter = useCallback(
-    (term: string, m: SearchMode, col: SearchColumn) => {
-      const sel = filterRef.current;
-      if (!sel) return;
-
-      const predicate = buildPredicate(term, m, col);
-      sel.update({
-        source: "search",
-        predicate,
-      });
-    },
-    [],
-  );
-
-  useEffect(() => {
-    updateFilter(debouncedQuery, mode, column);
-  }, [debouncedQuery, mode, column, updateFilter]);
+  }, [debouncedQuery, mode, column, filterSelection]);
 
   const table = useTable({
     table: "open_rubrics",
@@ -231,12 +218,8 @@ export function SearchDemo() {
     rowKey: "instruction",
     containerRef,
     expansion: { expandedRowHeight: 300 },
-    filter: filterRef.current ?? undefined,
+    filter: filterSelection,
   });
-
-  if (!filterReady) {
-    return <p style={{ color: "var(--muted-fg)" }}>Initializing search...</p>;
-  }
 
   return (
     <div className="demo-content">

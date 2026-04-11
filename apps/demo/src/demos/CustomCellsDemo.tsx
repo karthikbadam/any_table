@@ -64,12 +64,12 @@ function BadgeCell({ value }: { value: string }) {
   );
 }
 
-function SparklineCell({ data }: { data: number[] }) {
+function SparklineCell({ data, width }: { data: number[]; width: number }) {
   if (!data || data.length < 2) return null;
 
-  const width = 120;
-  const height = 32;
+  const height = 40;
   const padding = 2;
+  const w = Math.max(60, width);
 
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -77,7 +77,7 @@ function SparklineCell({ data }: { data: number[] }) {
 
   const points = data
     .map((v, i) => {
-      const x = padding + (i / (data.length - 1)) * (width - padding * 2);
+      const x = padding + (i / (data.length - 1)) * (w - padding * 2);
       const y = height - padding - ((v - min) / range) * (height - padding * 2);
       return `${x},${y}`;
     })
@@ -87,21 +87,25 @@ function SparklineCell({ data }: { data: number[] }) {
   const strokeColor = trending ? "var(--good-fg, #22c55e)" : "var(--bad-fg, #ef4444)";
 
   // Build fill polygon (area under the line)
-  const firstPoint = `${padding},${height - padding}`;
-  const lastPoint = `${padding + ((data.length - 1) / (data.length - 1)) * (width - padding * 2)},${height - padding}`;
-  const fillPoints = `${firstPoint} ${points} ${lastPoint}`;
+  const firstX = padding;
+  const lastX = padding + (w - padding * 2);
+  const fillPoints = `${firstX},${height - padding} ${points} ${lastX},${height - padding}`;
+
+  // Marker at the last data point
+  const lastVal = data[data.length - 1];
+  const lastY = height - padding - ((lastVal - min) / range) * (height - padding * 2);
 
   return (
     <svg
-      width={width}
+      width={w}
       height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      viewBox={`0 0 ${w} ${height}`}
       style={{ display: "block" }}
     >
       <polygon
         points={fillPoints}
         fill={strokeColor}
-        opacity={0.1}
+        opacity={0.12}
       />
       <polyline
         points={points}
@@ -111,6 +115,7 @@ function SparklineCell({ data }: { data: number[] }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx={lastX} cy={lastY} r={2.5} fill={strokeColor} />
     </svg>
   );
 }
@@ -155,29 +160,45 @@ function StatusCell({ value }: { value: boolean }) {
 // ── Column definitions ──────────────────────────────────────────
 
 const columns: ColumnDef[] = [
-  { key: "name", width: "8rem" },
-  { key: "category", width: "6.5rem" },
-  { key: "current", width: "5rem" },
-  { key: "trend", flex: 2, minWidth: "8rem" },
-  { key: "change", width: "5.5rem" },
-  { key: "active", width: "5.5rem" },
+  { key: "name", flex: 1, minWidth: "9rem" },
+  { key: "category", width: "7rem" },
+  { key: "current", width: "6rem" },
+  { key: "trend", flex: 3, minWidth: "12rem" },
+  { key: "change", width: "6rem" },
+  { key: "active", width: "6.5rem" },
 ];
 
-function renderCustomCell(value: unknown, column: string) {
+function renderCustomCell(
+  value: unknown,
+  column: string,
+  cellWidth: number,
+) {
   if (value == null) return "";
 
   switch (column) {
     case "category":
       return <BadgeCell value={String(value)} />;
     case "trend":
-      return <SparklineCell data={value as number[]} />;
+      // Fill the available cell width (minus horizontal padding).
+      return (
+        <SparklineCell
+          data={value as number[]}
+          width={Math.max(60, cellWidth - 24)}
+        />
+      );
     case "change":
       return <ChangeCell value={value as number} />;
     case "active":
       return <StatusCell value={value as boolean} />;
     case "current":
       return (
-        <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
+        <span
+          style={{
+            fontVariantNumeric: "tabular-nums",
+            fontWeight: 500,
+            fontSize: "0.9rem",
+          }}
+        >
           {Number(value).toLocaleString()}
         </span>
       );
@@ -268,7 +289,7 @@ export function CustomCellsDemo() {
                           alignItems: "center",
                         }}
                       >
-                        {renderCustomCell(cell.value, cell.column)}
+                        {renderCustomCell(cell.value, cell.column, cell.width)}
                       </Table.Cell>
                     ))
                   }

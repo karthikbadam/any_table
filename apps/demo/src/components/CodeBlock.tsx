@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 
 interface CodeBlockProps {
@@ -6,24 +6,8 @@ interface CodeBlockProps {
   title?: string;
 }
 
-function useIsDark() {
-  const [dark, setDark] = useState(
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
-  );
-
-  useMemo(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  return dark;
-}
-
 export function CodeBlock({ code, title }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
-  const isDark = useIsDark();
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {
@@ -31,8 +15,6 @@ export function CodeBlock({ code, title }: CodeBlockProps) {
       setTimeout(() => setCopied(false), 2000);
     });
   }, [code]);
-
-  const theme = isDark ? themes.nightOwl : themes.github;
 
   return (
     <div className="code-block">
@@ -42,7 +24,7 @@ export function CodeBlock({ code, title }: CodeBlockProps) {
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <Highlight theme={theme} code={code} language="tsx">
+      <Highlight theme={themes.github} code={code} language="tsx">
         {({ style, tokens, getLineProps, getTokenProps }) => (
           <pre className="code-block-pre" style={style}>
             <code>

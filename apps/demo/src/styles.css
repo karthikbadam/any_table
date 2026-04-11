@@ -30,6 +30,20 @@
   --json-null: #6b7280;
   --json-punctuation: #6b7280;
 
+  /* Code block syntax colors (light mode) */
+  --syntax-plain: #14171c;
+  --syntax-comment: #6b7280;
+  --syntax-keyword: #7c3aed;
+  --syntax-string: #16743a;
+  --syntax-number: #b45309;
+  --syntax-function: #0a66d1;
+  --syntax-class: #0a66d1;
+  --syntax-operator: #5b6470;
+  --syntax-punctuation: #5b6470;
+  --syntax-tag: #b91c1c;
+  --syntax-attr-name: #0a66d1;
+  --syntax-attr-value: #16743a;
+
   /* Selection */
   --selected-bg: #e0edff;
   --selected-border: #0a66d1;
@@ -60,6 +74,20 @@
     --json-boolean: #c4b5fd;
     --json-null: #6b7280;
     --json-punctuation: #9aa8bb;
+
+    /* Code block syntax colors (dark mode) */
+    --syntax-plain: #e6edf6;
+    --syntax-comment: #8b98a9;
+    --syntax-keyword: #c4b5fd;
+    --syntax-string: #81d6a6;
+    --syntax-number: #f3d26f;
+    --syntax-function: #7db7ff;
+    --syntax-class: #7db7ff;
+    --syntax-operator: #9aa8bb;
+    --syntax-punctuation: #9aa8bb;
+    --syntax-tag: #f5a2a2;
+    --syntax-attr-name: #7db7ff;
+    --syntax-attr-value: #81d6a6;
 
     /* Selection */
     --selected-bg: #2a1f4e;
@@ -316,8 +344,56 @@ dialog:focus {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.8rem;
   line-height: 1.5;
-  color: var(--fg);
+  color: var(--syntax-plain);
+  background: transparent !important;
 }
+
+/* Prism token colors, driven by CSS variables so they adapt to dark mode */
+.code-block-pre .token.comment,
+.code-block-pre .token.prolog,
+.code-block-pre .token.doctype,
+.code-block-pre .token.cdata { color: var(--syntax-comment); font-style: italic; }
+
+.code-block-pre .token.keyword,
+.code-block-pre .token.control,
+.code-block-pre .token.directive,
+.code-block-pre .token.important,
+.code-block-pre .token.unit { color: var(--syntax-keyword); }
+
+.code-block-pre .token.string,
+.code-block-pre .token.char,
+.code-block-pre .token.regex,
+.code-block-pre .token.template-string { color: var(--syntax-string); }
+
+.code-block-pre .token.number,
+.code-block-pre .token.boolean,
+.code-block-pre .token.constant { color: var(--syntax-number); }
+
+.code-block-pre .token.function,
+.code-block-pre .token.method,
+.code-block-pre .token.function-variable { color: var(--syntax-function); }
+
+.code-block-pre .token.class-name,
+.code-block-pre .token.maybe-class-name,
+.code-block-pre .token.builtin,
+.code-block-pre .token.namespace { color: var(--syntax-class); }
+
+.code-block-pre .token.operator,
+.code-block-pre .token.entity,
+.code-block-pre .token.url { color: var(--syntax-operator); }
+
+.code-block-pre .token.punctuation { color: var(--syntax-punctuation); }
+
+.code-block-pre .token.tag,
+.code-block-pre .token.selector { color: var(--syntax-tag); }
+
+.code-block-pre .token.attr-name,
+.code-block-pre .token.property { color: var(--syntax-attr-name); }
+
+.code-block-pre .token.attr-value { color: var(--syntax-attr-value); }
+
+.code-block-pre .token.deleted { color: var(--bad-fg); }
+.code-block-pre .token.inserted { color: var(--good-fg); }
 
 /* ── Hamburger / mobile nav ── */
 .hamburger-btn {

@@ -3,7 +3,10 @@ import { MosaicProvider } from "@any_table/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavPanel } from "./components/NavPanel";
 import { categories, DEFAULT_DEMO_ID, findNavItem } from "./config/nav";
+import { CrossFilterDemo } from "./demos/CrossFilterDemo";
+import { CustomCellsDemo } from "./demos/CustomCellsDemo";
 import { RubricsDemo } from "./demos/RubricsDemo";
+import { SearchDemo } from "./demos/SearchDemo";
 import { TracesDemo } from "./demos/TracesDemo";
 import { useQueryParam } from "./hooks/useQueryParam";
 import { setupMosaic } from "./setup-mosaic";
@@ -61,7 +64,15 @@ export default function App() {
 
   const active = navItem ?? findNavItem(DEFAULT_DEMO_ID)!;
   const DemoComponent =
-    active.id === "swe-bench-traces" ? TracesDemo : RubricsDemo;
+    active.id === "swe-bench-traces"
+      ? TracesDemo
+      : active.id === "custom-cells"
+        ? CustomCellsDemo
+        : active.id === "search"
+          ? SearchDemo
+          : active.id === "cross-filtering"
+            ? CrossFilterDemo
+            : RubricsDemo;
 
   return (
     <MosaicProvider coordinator={coordinatorRef.current}>

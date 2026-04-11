@@ -6,7 +6,7 @@ import {
   useTable,
 } from "@any_table/react";
 import { Selection as MosaicSelection } from "@uwdata/mosaic-core";
-import { sql } from "@uwdata/mosaic-sql";
+import { and, literal, sql } from "@uwdata/mosaic-sql";
 import { useEffect, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
@@ -270,20 +270,22 @@ export function CrossFilterDemo() {
   ).current;
 
   // Whenever the React state changes, update the Selection for the table.
+  // Values must be wrapped in literal() — raw strings interpolated into the
+  // sql template tag are treated as VERBATIM SQL text, not quoted values.
   useEffect(() => {
     const parts: unknown[] = [];
     if (filterState.winner) {
-      parts.push(sql`"winner" = ${filterState.winner}`);
+      parts.push(sql`"winner" = ${literal(filterState.winner)}`);
     }
     if (filterState.source) {
-      parts.push(sql`"source" = ${filterState.source}`);
+      parts.push(sql`"source" = ${literal(filterState.source)}`);
     }
 
     let predicate: unknown = null;
     if (parts.length === 1) {
       predicate = parts[0];
-    } else if (parts.length === 2) {
-      predicate = sql`${parts[0] as any} AND ${parts[1] as any}`;
+    } else if (parts.length >= 2) {
+      predicate = and(...(parts as any[]));
     }
 
     (tableFilter as any).update({

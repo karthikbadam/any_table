@@ -1,7 +1,7 @@
 import type { ColumnDef, Selection } from "@any_table/react";
 import { Table, TextCell, useTable } from "@any_table/react";
 import { Selection as MosaicSelection } from "@uwdata/mosaic-core";
-import { sql } from "@uwdata/mosaic-sql";
+import { literal, or, sql } from "@uwdata/mosaic-sql";
 import { useEffect, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
@@ -26,6 +26,9 @@ const TEXT_COLUMNS = ["instruction", "response_a", "response_b", "rubric", "sour
 
 // Build a Mosaic-sql predicate (an ExprNode) from the search state.
 // Returns null when the query is empty.
+//
+// Values must be wrapped in literal() — strings interpolated bare into the
+// sql template tag are treated as VERBATIM SQL text, not quoted literals.
 function buildPredicate(
   term: string,
   mode: SearchMode,
@@ -35,21 +38,19 @@ function buildPredicate(
 
   const targets = column === "all" ? TEXT_COLUMNS : [column];
 
-  // Build one sql fragment per column, OR them together via raw SQL.
   const parts = targets.map((col) => {
     switch (mode) {
       case "contains":
-        return sql`"${col}" ILIKE ${"%" + term + "%"}`;
+        return sql`"${col}" ILIKE ${literal("%" + term + "%")}`;
       case "exact":
-        return sql`"${col}" = ${term}`;
+        return sql`"${col}" = ${literal(term)}`;
       case "regex":
-        return sql`regexp_matches("${col}", ${term})`;
+        return sql`regexp_matches("${col}", ${literal(term)}, 'i')`;
     }
   });
 
   if (parts.length === 1) return parts[0];
-  // For multiple columns, combine with OR using the sql tag.
-  return parts.reduce((acc, p) => sql`${acc} OR ${p}`);
+  return or(...(parts as any[]));
 }
 
 // ── Search toolbar ──────────────────────────────────────────────

@@ -1,29 +1,24 @@
-import { useCallback, useMemo, useState } from "react";
-import { Highlight, themes } from "prism-react-renderer";
+import { useCallback, useState } from "react";
+import { Highlight, type PrismTheme } from "prism-react-renderer";
 
 interface CodeBlockProps {
   code: string;
   title?: string;
 }
 
-function useIsDark() {
-  const [dark, setDark] = useState(
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
-  );
-
-  useMemo(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  return dark;
-}
+// Empty theme: prism-react-renderer still applies `.token.<type>` classes
+// from getTokenProps, but no inline colors. Actual colors come from
+// styles.css using CSS variables that switch with prefers-color-scheme.
+const emptyTheme: PrismTheme = {
+  plain: {
+    color: "inherit",
+    backgroundColor: "transparent",
+  },
+  styles: [],
+};
 
 export function CodeBlock({ code, title }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
-  const isDark = useIsDark();
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {
@@ -31,8 +26,6 @@ export function CodeBlock({ code, title }: CodeBlockProps) {
       setTimeout(() => setCopied(false), 2000);
     });
   }, [code]);
-
-  const theme = isDark ? themes.nightOwl : themes.github;
 
   return (
     <div className="code-block">
@@ -42,9 +35,9 @@ export function CodeBlock({ code, title }: CodeBlockProps) {
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <Highlight theme={theme} code={code} language="tsx">
-        {({ style, tokens, getLineProps, getTokenProps }) => (
-          <pre className="code-block-pre" style={style}>
+      <Highlight theme={emptyTheme} code={code} language="tsx">
+        {({ className, tokens, getLineProps, getTokenProps }) => (
+          <pre className={`code-block-pre ${className}`}>
             <code>
               {tokens.map((line, i) => (
                 <div key={i} {...getLineProps({ line })}>

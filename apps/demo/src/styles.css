@@ -270,13 +270,12 @@ dialog:focus {
   display: none;
 }
 
-/* ── Code block (always light mode) ── */
+/* ── Code block ── */
 .code-block {
   border-radius: 8px;
-  border: 1px solid #d8dee7;
-  background: #ffffff;
+  border: 1px solid var(--border);
+  background: var(--surface);
   overflow: hidden;
-  color-scheme: light;
 }
 
 .code-block-header {
@@ -284,21 +283,21 @@ dialog:focus {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  background: #f3f5f7;
-  border-bottom: 1px solid #d8dee7;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
   font-size: 0.75rem;
 }
 
 .code-block-title {
-  color: #5b6470;
+  color: var(--muted-fg);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .code-block-copy {
   background: none;
-  border: 1px solid #d8dee7;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #5b6470;
+  color: var(--muted-fg);
   font-size: 0.72rem;
   padding: 2px 8px;
   cursor: pointer;
@@ -306,8 +305,8 @@ dialog:focus {
 }
 
 .code-block-copy:hover {
-  color: #14171c;
-  border-color: #c2cbd6;
+  color: var(--fg);
+  border-color: var(--border-strong);
 }
 
 .code-block-pre {
@@ -317,7 +316,7 @@ dialog:focus {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.8rem;
   line-height: 1.5;
-  color: #14171c;
+  color: var(--fg);
 }
 
 /* ── Hamburger / mobile nav ── */

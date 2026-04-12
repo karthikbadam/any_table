@@ -503,4 +503,197 @@ export function CrossFilterDemo() {
     </>
   );
 }`,
+
+  // ── Showcase demos ─────────────────────────────────────────────
+
+  "exoplanets": `// Synthetic dataset modeled after NASA's Exoplanet Archive.
+// Generated entirely via DuckDB SQL at startup:
+//   CREATE TABLE exoplanets AS
+//   SELECT ... pl_name, hostname, disc_year, discoverymethod,
+//          pl_rade, pl_bmasse, pl_eqt, sy_dist, pl_type, habitable_zone ...
+//   FROM generate_series(1, 34000) AS t(i)
+//
+// Features: crossfiltering (year + method), search, custom cells
+
+import { Table, useTable, useMosaicCoordinator } from "@any_table/react";
+import { Selection } from "@uwdata/mosaic-core";
+import { and, literal, or, sql } from "@uwdata/mosaic-sql";
+
+// Planet type badge with color
+function BadgeCell({ value }: { value: string }) {
+  const colors = { Terrestrial: "#10b981", "Super-Earth": "#06b6d4",
+    "Neptune-like": "#3b82f6", "Gas Giant": "#8b5cf6" };
+  const c = colors[value] ?? "#888";
+  return <span style={{ padding: "2px 8px", borderRadius: 9999,
+    background: c + "18", color: c }}>{value}</span>;
+}
+
+// Habitable zone indicator
+function HabitableZoneCell({ value }: { value: boolean }) {
+  return <span style={{ color: value ? "#22c55e" : "var(--muted-fg)" }}>
+    {value ? "Yes" : "No"}
+  </span>;
+}
+
+export function ExoplanetsDemo() {
+  const containerRef = useRef(null);
+  const filter = useRef(Selection.crossfilter()).current;
+
+  // Combined search + crossfilter → single Selection
+  useEffect(() => {
+    const parts = [];
+    if (searchTerm) parts.push(sql\`"pl_name" ILIKE \${literal("%" + searchTerm + "%")}\`);
+    if (yearFilter) parts.push(sql\`"disc_year" = \${literal(yearFilter)}\`);
+    filter.update({ source: "combined", predicate: parts.length ? and(...parts) : null });
+  }, [searchTerm, yearFilter]);
+
+  const table = useTable({ table: "exoplanets", columns, rowKey: "pl_name",
+    containerRef, filter });
+  // ... render Table.Root with FilterBar charts + search input
+}`,
+
+  "meteorites": `// Synthetic dataset modeled after NASA's meteorite landings catalog.
+// Generated entirely via DuckDB SQL at startup:
+//   CREATE TABLE meteorites AS
+//   SELECT ... name, id, recclass, mass_g, fall, year, reclat, reclong, class_group
+//   FROM generate_series(1, 45000) AS t(i)
+//
+// Features: search, log-scale mass bars, classification badges
+// The largest dataset in the gallery (45k rows) — showcases virtualization
+
+import { Table, useTable } from "@any_table/react";
+import { Selection } from "@uwdata/mosaic-core";
+import { literal, or, sql } from "@uwdata/mosaic-sql";
+
+// Log-scale inline bar for mass (ranges from <1g to 160 tons)
+function InlineBarCell({ value, max }: { value: number; max: number }) {
+  const pct = Math.log10(value + 1) / Math.log10(max + 1);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <svg width={80} height={16}>
+        <rect width={pct * 80} height={12} rx={2} fill="#f59e0b" opacity={0.7} y={2} />
+      </svg>
+      <span>{formatMass(value)}</span>
+    </div>
+  );
+}
+
+// Search: builds ILIKE predicates, updates shared Selection
+const filter = useRef(Selection.crossfilter()).current;
+useEffect(() => {
+  filter.update({
+    source: "search",
+    predicate: term ? sql\`"name" ILIKE \${literal("%" + term + "%")}\` : null,
+  });
+}, [term]);
+
+const table = useTable({ table: "meteorites", columns, rowKey: "id",
+  containerRef, filter });`,
+
+  "clinical-trials": `// Synthetic dataset modeled after ClinicalTrials.gov.
+// Generated entirely via DuckDB SQL at startup:
+//   CREATE TABLE clinical_trials AS
+//   SELECT ... nct_id, title, status, phase, conditions,
+//          interventions, sponsor, enrollment, start_year, study_type
+//   FROM generate_series(1, 15000) AS t(i)
+//
+// Features: crossfiltering (phase + status), search, status badges,
+//           enrollment progress bars
+
+import { Table, TextCell, useTable, useMosaicCoordinator } from "@any_table/react";
+import { Selection } from "@uwdata/mosaic-core";
+import { and, literal, sql } from "@uwdata/mosaic-sql";
+
+// Status badge with semantic color
+function StatusBadgeCell({ value }: { value: string }) {
+  const colors = { Recruiting: "#3b82f6", Completed: "#10b981",
+    Terminated: "#ef4444", Suspended: "#f59e0b" };
+  const c = colors[value] ?? "#888";
+  return <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+    <span style={{ width: 7, height: 7, borderRadius: "50%", background: c }} />
+    <span style={{ color: c }}>{value}</span>
+  </span>;
+}
+
+// Enrollment progress bar
+function EnrollmentBar({ value, max }: { value: number; max: number }) {
+  return <svg width={60} height={14}>
+    <rect width={(value / max) * 60} height={10} rx={2} fill="#8b5cf6" y={2} />
+  </svg>;
+}
+
+// Combined search + crossfilter into single Selection
+const filter = useRef(Selection.crossfilter()).current;
+const table = useTable({ table: "clinical_trials", columns,
+  rowKey: "nct_id", containerRef, filter });`,
+
+  "proteins": `// Synthetic dataset modeled after the RCSB Protein Data Bank.
+// Generated entirely via DuckDB SQL at startup:
+//   CREATE TABLE proteins AS
+//   SELECT ... pdb_id, title, organism, method, resolution,
+//          release_year, molecular_weight, chain_count, classification, ligand_count
+//   FROM generate_series(1, 15000) AS t(i)
+//
+// Features: search, resolution heatmap cell, method/organism badges
+
+import { Table, TextCell, useTable } from "@any_table/react";
+import { Selection } from "@uwdata/mosaic-core";
+import { literal, or, sql } from "@uwdata/mosaic-sql";
+
+// Resolution heatmap: green (1.0 A) → yellow (2.5 A) → red (4.0+ A)
+function HeatCell({ value, min, max }: { value: number; min: number; max: number }) {
+  const t = (value - min) / (max - min);
+  const r = t < 0.5 ? Math.round(t * 2 * 255) : 255;
+  const g = t < 0.5 ? 255 : Math.round((1 - (t - 0.5) * 2) * 255);
+  return <span style={{
+    padding: "2px 8px", borderRadius: 4,
+    background: \`rgba(\${r}, \${g}, 0, 0.15)\`,
+    color: \`rgb(\${r * 0.8}, \${g * 0.7}, 0)\`,
+  }}>{value.toFixed(2)} A</span>;
+}
+
+// Method badge
+function BadgeCell({ value }: { value: string }) {
+  const colors = { "X-RAY DIFFRACTION": "#3b82f6",
+    "ELECTRON MICROSCOPY": "#8b5cf6", "SOLUTION NMR": "#06b6d4" };
+  const c = colors[value] ?? "#888";
+  return <span style={{ padding: "2px 8px", borderRadius: 9999,
+    background: c + "18", color: c }}>{value}</span>;
+}
+
+const table = useTable({ table: "proteins", columns, rowKey: "pdb_id",
+  containerRef, filter });`,
+
+  "air-quality": `// Synthetic dataset modeled after OpenAQ air quality measurements.
+// Generated entirely via DuckDB SQL at startup:
+//   CREATE TABLE air_quality AS
+//   WITH cities(city, country, continent, lat, lon) AS (VALUES ...)
+//   SELECT ... location_id, city, country, pollutant, value, unit,
+//          aqi, aqi_category, latitude, longitude, continent
+//   FROM generate_series(1, 15000) JOIN cities ...
+//
+// Features: crossfiltering (country + AQI category), search,
+//           EPA 6-tier AQI gradient cell, pollutant badges
+
+import { Table, useTable, useMosaicCoordinator } from "@any_table/react";
+import { Selection } from "@uwdata/mosaic-core";
+import { and, literal, sql } from "@uwdata/mosaic-sql";
+
+// AQI cell with EPA color scale (green → yellow → red → purple → maroon)
+function AqiCell({ value }: { value: number }) {
+  let bg, fg;
+  if (value <= 50)       { bg = "rgba(16,185,129,0.15)"; fg = "#10b981"; }
+  else if (value <= 100) { bg = "rgba(245,158,11,0.15)"; fg = "#d97706"; }
+  else if (value <= 150) { bg = "rgba(249,115,22,0.15)"; fg = "#ea580c"; }
+  else if (value <= 200) { bg = "rgba(239,68,68,0.15)"; fg = "#dc2626"; }
+  else if (value <= 300) { bg = "rgba(124,58,237,0.15)"; fg = "#7c3aed"; }
+  else                   { bg = "rgba(153,27,27,0.2)"; fg = "#991b1b"; }
+  return <span style={{ padding: "2px 10px", borderRadius: 4,
+    background: bg, color: fg, fontWeight: 700 }}>{value}</span>;
+}
+
+// Combined search + crossfilter
+const filter = useRef(Selection.crossfilter()).current;
+const table = useTable({ table: "air_quality", columns,
+  rowKey: "location_id", containerRef, filter });`,
 };

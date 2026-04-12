@@ -53,6 +53,46 @@ export const categories: NavCategory[] = [
       },
     ],
   },
+  {
+    label: "Showcase",
+    items: [
+      {
+        id: "exoplanets",
+        title: "Exoplanets",
+        description:
+          "Synthetic dataset modeled after NASA's Exoplanet Archive, generated via DuckDB SQL. 34,000 rows with planet-type badges, habitable-zone indicators, and crossfiltering by discovery year and method.",
+        enabled: true,
+      },
+      {
+        id: "meteorites",
+        title: "Meteorites",
+        description:
+          "Synthetic dataset modeled after NASA's meteorite landings catalog, generated via DuckDB SQL. 45,000 rows with classification badges, log-scale mass bars, and full-text search — the largest dataset in the gallery.",
+        enabled: true,
+      },
+      {
+        id: "clinical-trials",
+        title: "Clinical Trials",
+        description:
+          "Synthetic dataset modeled after ClinicalTrials.gov, generated via DuckDB SQL. 15,000 rows with phase and status crossfiltering, enrollment progress bars, and semantic status badges.",
+        enabled: true,
+      },
+      {
+        id: "proteins",
+        title: "Protein Structures",
+        description:
+          "Synthetic dataset modeled after the RCSB Protein Data Bank, generated via DuckDB SQL. 15,000 rows with resolution heatmap cells, organism badges, and experimental method tags.",
+        enabled: true,
+      },
+      {
+        id: "air-quality",
+        title: "Air Quality",
+        description:
+          "Synthetic dataset modeled after OpenAQ measurements, generated via DuckDB SQL. 15,000 rows across 35 cities with AQI color-gradient cells and crossfiltering by country and AQI category.",
+        enabled: true,
+      },
+    ],
+  },
 ];
 
 export const DEFAULT_DEMO_ID = "knowledge-rubrics";

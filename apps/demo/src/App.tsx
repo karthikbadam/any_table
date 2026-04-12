@@ -1,15 +1,34 @@
 import type { Coordinator } from "@any_table/react";
 import { MosaicProvider } from "@any_table/react";
+import type { ComponentType } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavPanel } from "./components/NavPanel";
 import { categories, DEFAULT_DEMO_ID, findNavItem } from "./config/nav";
+import { AirQualityDemo } from "./demos/AirQualityDemo";
+import { ClinicalTrialsDemo } from "./demos/ClinicalTrialsDemo";
 import { CrossFilterDemo } from "./demos/CrossFilterDemo";
 import { CustomCellsDemo } from "./demos/CustomCellsDemo";
+import { ExoplanetsDemo } from "./demos/ExoplanetsDemo";
+import { MeteoritesDemo } from "./demos/MeteoritesDemo";
+import { ProteinsDemo } from "./demos/ProteinsDemo";
 import { RubricsDemo } from "./demos/RubricsDemo";
 import { SearchDemo } from "./demos/SearchDemo";
 import { TracesDemo } from "./demos/TracesDemo";
 import { useQueryParam } from "./hooks/useQueryParam";
 import { setupMosaic } from "./setup-mosaic";
+
+const DEMO_COMPONENTS: Record<string, ComponentType> = {
+  "knowledge-rubrics": RubricsDemo,
+  "custom-cells": CustomCellsDemo,
+  "swe-bench-traces": TracesDemo,
+  "cross-filtering": CrossFilterDemo,
+  "search": SearchDemo,
+  "exoplanets": ExoplanetsDemo,
+  "meteorites": MeteoritesDemo,
+  "clinical-trials": ClinicalTrialsDemo,
+  "proteins": ProteinsDemo,
+  "air-quality": AirQualityDemo,
+};
 
 export default function App() {
   const [setup, setSetup] = useState(false);
@@ -63,16 +82,7 @@ export default function App() {
   }
 
   const active = navItem ?? findNavItem(DEFAULT_DEMO_ID)!;
-  const DemoComponent =
-    active.id === "swe-bench-traces"
-      ? TracesDemo
-      : active.id === "custom-cells"
-        ? CustomCellsDemo
-        : active.id === "search"
-          ? SearchDemo
-          : active.id === "cross-filtering"
-            ? CrossFilterDemo
-            : RubricsDemo;
+  const DemoComponent = DEMO_COMPONENTS[active.id] ?? RubricsDemo;
 
   return (
     <MosaicProvider coordinator={coordinatorRef.current}>

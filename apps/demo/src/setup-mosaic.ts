@@ -45,6 +45,20 @@ export async function setupMosaic(): Promise<Coordinator> {
     FROM read_parquet('swe_bench.parquet')
   `);
 
+  // Generate a 1M-row synthetic table entirely in SQL (no file needed)
+  await connection.query(`
+    CREATE TABLE million AS
+    SELECT
+      i AS id,
+      (['Electronics','Clothing','Food','Health','Sports','Books','Home','Garden',
+        'Automotive','Toys','Music','Movies','Software','Travel','Finance',
+        'Education','Energy','Logistics','Retail','Telecom'])[1 + (i % 20)] AS category,
+      round(random() * 10000, 2) AS amount,
+      ('2020-01-01'::DATE + (i % 1826))::VARCHAR AS date,
+      (['active','pending','completed','failed'])[1 + (i % 4)] AS status
+    FROM generate_series(1, 1000000) AS t(i)
+  `);
+
   // Verify
   const countResult = await connection.query(
     "SELECT count(*) as cnt FROM open_rubrics",
@@ -57,6 +71,12 @@ export async function setupMosaic(): Promise<Coordinator> {
   );
   const sweRows = sweCount.toArray()[0].cnt;
   console.log(`[any_table] Loaded ${sweRows} rows from swe_bench.parquet`);
+
+  const millionCount = await connection.query(
+    "SELECT count(*) as cnt FROM million",
+  );
+  const millionRows = millionCount.toArray()[0].cnt;
+  console.log(`[any_table] Generated ${millionRows} rows in million table`);
 
   // 3. Create a Mosaic-compatible connector
   const connector = {

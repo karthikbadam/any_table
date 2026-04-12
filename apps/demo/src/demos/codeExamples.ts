@@ -1,87 +1,95 @@
 export const codeExamples: Record<string, string> = {
   "knowledge-rubrics": `import type { ColumnDef } from "@any_table/react";
-import { Table, TextCell, useTable } from "@any_table/react";
+import { Table, useTable } from "@any_table/react";
 import { useRef } from "react";
 
+// DuckDB generates this table at startup — no file needed:
+// CREATE TABLE million AS
+// SELECT i AS id, ... AS category, round(random()*10000,2) AS amount,
+//   ('2020-01-01'::DATE + (i%1826))::VARCHAR AS date,
+//   (['active','pending','completed','failed'])[1+(i%4)] AS status
+// FROM generate_series(1, 1000000) AS t(i)
+
 const columns: ColumnDef[] = [
-  { key: "source", width: "6rem" },
-  { key: "winner", width: "2rem" },
-  { key: "instruction", flex: 3, minWidth: "12rem" },
-  { key: "response_a", flex: 2, minWidth: "10rem" },
-  { key: "response_b", flex: 2, minWidth: "10rem" },
-  { key: "rubric", flex: 2, minWidth: "10rem" },
+  { key: "id", width: "6rem" },
+  { key: "category", width: "8rem" },
+  { key: "amount", width: "7rem" },
+  { key: "date", width: "7rem" },
+  { key: "status", width: "6rem" },
 ];
 
-function renderCell(
-  value: unknown,
-  column: string,
-  isExpanded: boolean,
-  onToggleExpand?: () => void,
-) {
+function renderCell(value: unknown, column: string) {
   if (value == null) return "";
-  if (["instruction", "response_a", "response_b", "rubric"].includes(column)) {
+
+  if (column === "status") {
+    const colors: Record<string, string> = {
+      active: "#22c55e", completed: "#3b82f6",
+      pending: "#f59e0b", failed: "#ef4444",
+    };
+    const str = String(value);
+    const c = colors[str] ?? "#888";
     return (
-      <TextCell
-        value={value}
-        isExpanded={isExpanded}
-        onToggleExpand={onToggleExpand}
-      />
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: c }} />
+        <span style={{ color: c }}>{str}</span>
+      </span>
     );
   }
+
+  if (column === "category") {
+    return (
+      <span style={{
+        padding: "2px 8px", borderRadius: 9999,
+        fontSize: "0.7rem", fontWeight: 600,
+        background: "#3b82f618", color: "#3b82f6",
+      }}>
+        {String(value)}
+      </span>
+    );
+  }
+
+  if (column === "amount") {
+    return <span style={{ fontVariantNumeric: "tabular-nums" }}>
+      \${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+    </span>;
+  }
+
   return String(value);
 }
 
-export function RubricsDemo() {
+export function MillionRowDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const table = useTable({
-    table: "open_rubrics",
+    table: "million",
     columns,
-    rowKey: "instruction",
+    rowKey: "id",
     containerRef,
-    expansion: { expandedRowHeight: 300 },
   });
 
   return (
     <div ref={containerRef}>
       <Table.Root {...table.rootProps}>
         <Table.Header>
-          {({ columns: cols }) =>
-            cols.map((col) => (
-              <Table.HeaderCell key={col.key} column={col.key}>
-                <Table.SortTrigger column={col.key}>
-                  {col.key.replace(/_/g, " ")}
-                </Table.SortTrigger>
-              </Table.HeaderCell>
-            ))
-          }
+          {({ columns: cols }) => cols.map((col) => (
+            <Table.HeaderCell key={col.key} column={col.key}>
+              <Table.SortTrigger column={col.key}>
+                {col.key}
+              </Table.SortTrigger>
+            </Table.HeaderCell>
+          ))}
         </Table.Header>
-
         <Table.Viewport>
-          {({ rows }) =>
-            rows.map((row) => (
-              <Table.Row key={row.key} row={row}>
-                {({ cells }) =>
-                  cells.map((cell) => (
-                    <Table.Cell
-                      key={cell.column}
-                      column={cell.column}
-                      width={cell.width}
-                      offset={cell.offset}
-                      onClick={() => cell.onToggleExpand?.()}
-                    >
-                      {renderCell(
-                        cell.value,
-                        cell.column,
-                        cell.isExpanded,
-                        cell.onToggleExpand,
-                      )}
-                    </Table.Cell>
-                  ))
-                }
-              </Table.Row>
-            ))
-          }
+          {({ rows }) => rows.map((row) => (
+            <Table.Row key={row.key} row={row}>
+              {({ cells }) => cells.map((cell) => (
+                <Table.Cell key={cell.column} column={cell.column}
+                  width={cell.width} offset={cell.offset}>
+                  {renderCell(cell.value, cell.column)}
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          ))}
         </Table.Viewport>
       </Table.Root>
     </div>

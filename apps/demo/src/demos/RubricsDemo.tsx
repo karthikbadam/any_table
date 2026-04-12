@@ -1,60 +1,133 @@
 import type { ColumnDef } from "@any_table/react";
-import { Table, TextCell, useTable } from "@any_table/react";
+import { Table, useTable } from "@any_table/react";
 import { useRef } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
 
 const columns: ColumnDef[] = [
-  { key: "source", width: "6rem" },
-  { key: "winner", width: "2rem" },
-  { key: "instruction", flex: 3, minWidth: "12rem" },
-  { key: "response_a", flex: 2, minWidth: "10rem" },
-  { key: "response_b", flex: 2, minWidth: "10rem" },
-  { key: "rubric", flex: 2, minWidth: "10rem" },
+  { key: "id", width: "6rem" },
+  { key: "category", width: "8rem" },
+  { key: "amount", width: "7rem" },
+  { key: "date", width: "7rem" },
+  { key: "status", width: "6rem" },
 ];
 
-function renderRubricCell(
-  value: unknown,
-  column: string,
-  isExpanded: boolean,
-  onToggleExpand?: () => void,
-) {
+const STATUS_COLORS: Record<string, string> = {
+  active: "#22c55e",
+  completed: "#3b82f6",
+  pending: "#f59e0b",
+  failed: "#ef4444",
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Electronics: "#3b82f6",
+  Clothing: "#8b5cf6",
+  Food: "#f59e0b",
+  Health: "#10b981",
+  Sports: "#06b6d4",
+  Books: "#ec4899",
+  Home: "#f97316",
+  Garden: "#84cc16",
+  Automotive: "#64748b",
+  Toys: "#a855f7",
+  Music: "#e879f9",
+  Movies: "#ef4444",
+  Software: "#0ea5e9",
+  Travel: "#14b8a6",
+  Finance: "#eab308",
+  Education: "#6366f1",
+  Energy: "#22d3ee",
+  Logistics: "#78716c",
+  Retail: "#fb923c",
+  Telecom: "#2dd4bf",
+};
+
+function renderCell(value: unknown, column: string) {
   if (value == null) return "";
-  const str = String(value);
 
-  if (column === "winner") {
-    const color =
-      str === "A"
-        ? "var(--accent)"
-        : str === "B"
-          ? "var(--bad-fg)"
-          : "var(--muted-fg)";
-    return <span style={{ fontWeight: 600, color }}>{str}</span>;
-  }
-
-  if (["instruction", "response_a", "response_b", "rubric"].includes(column)) {
+  if (column === "status") {
+    const str = String(value);
+    const color = STATUS_COLORS[str] ?? "var(--muted-fg)";
     return (
-      <TextCell
-        value={value}
-        isExpanded={isExpanded}
-        onToggleExpand={onToggleExpand}
-      />
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          fontSize: "0.75rem",
+        }}
+      >
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: color,
+            boxShadow: `0 0 4px ${color}`,
+            flexShrink: 0,
+          }}
+        />
+        <span style={{ color }}>{str}</span>
+      </span>
     );
   }
 
-  return str;
+  if (column === "category") {
+    const str = String(value);
+    const color = CATEGORY_COLORS[str] ?? "var(--muted-fg)";
+    return (
+      <span
+        style={{
+          display: "inline-block",
+          padding: "2px 8px",
+          borderRadius: 9999,
+          fontSize: "0.7rem",
+          fontWeight: 600,
+          letterSpacing: "0.02em",
+          background: `${color}18`,
+          color,
+          border: `1px solid ${color}40`,
+        }}
+      >
+        {str}
+      </span>
+    );
+  }
+
+  if (column === "amount") {
+    return (
+      <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
+        ${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </span>
+    );
+  }
+
+  if (column === "id") {
+    return (
+      <span
+        style={{
+          fontVariantNumeric: "tabular-nums",
+          fontSize: "0.75rem",
+          color: "var(--muted-fg)",
+        }}
+      >
+        {Number(value).toLocaleString()}
+      </span>
+    );
+  }
+
+  return String(value);
 }
 
 export function RubricsDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const table = useTable({
-    table: "open_rubrics",
+    table: "million",
     columns,
-    rowKey: "instruction",
+    rowKey: "id",
     containerRef,
-    expansion: { expandedRowHeight: 300 },
   });
 
   return (
@@ -118,21 +191,16 @@ export function RubricsDemo() {
                         column={cell.column}
                         width={cell.width}
                         offset={cell.offset}
-                        onClick={() => cell.onToggleExpand?.()}
                         style={{
                           padding: "8px 12px",
                           fontSize: "0.8rem",
                           lineHeight: "1.5",
                           color: "var(--fg)",
-                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
                         }}
                       >
-                        {renderRubricCell(
-                          cell.value,
-                          cell.column,
-                          cell.isExpanded,
-                          cell.onToggleExpand,
-                        )}
+                        {renderCell(cell.value, cell.column)}
                       </Table.Cell>
                     ))
                   }
@@ -145,7 +213,7 @@ export function RubricsDemo() {
 
       <CodeBlock
         code={codeExamples["knowledge-rubrics"]}
-        title="RubricsDemo.tsx"
+        title="MillionRowDemo.tsx"
       />
     </div>
   );

@@ -52,12 +52,27 @@ export async function setupMosaic(): Promise<Coordinator> {
     CREATE TABLE million AS
     SELECT
       i AS id,
+      (['Acme Corp','Globex','Initech','Umbrella','Soylent','Wayne Ent',
+        'Stark Ind','Tyrell','Oscorp','Wonka','Hooli','Pied Piper',
+        'Massive Dynamic','Cyberdyne','Weyland','Nakatomi','Gringotts',
+        'Aperture Sci','Black Mesa','Cyberlife'])[1 + (i % 20)]
+        || ' #' || (1 + (i % 500))::VARCHAR AS customer,
       (['Electronics','Clothing','Food','Health','Sports','Books','Home','Garden',
         'Automotive','Toys','Music','Movies','Software','Travel','Finance',
         'Education','Energy','Logistics','Retail','Telecom'])[1 + (i % 20)] AS category,
       round(random() * 10000, 2) AS amount,
       ('2020-01-01'::DATE + (i % 1826)::INTEGER)::VARCHAR AS date,
-      (['active','pending','completed','failed'])[1 + (i % 4)] AS status
+      (['NA','EU','APAC','LATAM','MEA'])[1 + (i % 5)] AS region,
+      (['low','medium','high','critical'])[1 + (i % 4)] AS priority,
+      (['active','pending','completed','failed','cancelled'])[1 + (i % 5)] AS status,
+      (['Quarterly review scheduled','Awaiting approval from compliance team',
+        'Shipment delayed due to customs hold','Payment confirmed — processing order',
+        'Contract renegotiation in progress','Inventory shortage flagged by warehouse',
+        'Customer requested expedited delivery','Routine maintenance window applied',
+        'Onboarding documentation sent to client','Integration testing phase complete',
+        'Refund processed and notification sent','Feature request logged for roadmap',
+        'Escalated to tier 2 support team','Budget variance requires explanation',
+        'Automated reconciliation succeeded'])[1 + (i % 15)] AS notes
     FROM generate_series(1, 1000000) AS t(i)
   `);
 

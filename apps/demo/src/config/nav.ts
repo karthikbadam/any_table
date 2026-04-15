@@ -16,9 +16,9 @@ export const categories: NavCategory[] = [
     items: [
       {
         id: "knowledge-rubrics",
-        title: "Million Rows",
+        title: "Table",
         description:
-          "A sortable, virtualized table rendering 1,000,000 rows generated in DuckDB. Five columns with category badges, status indicators, and formatted currency — showcasing smooth scrolling at scale.",
+          "A sortable, virtualized table rendering 1,000,000 rows generated in DuckDB. Nine columns with category badges, status indicators, priority tags, and formatted currency — showcasing smooth scrolling at scale.",
         enabled: true,
       },
       {

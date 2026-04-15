@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@any_table/react";
-import { Table, useTable } from "@any_table/react";
+import { Table, TextCell, useTable } from "@any_table/react";
 import { useRef } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
@@ -7,10 +7,14 @@ import { codeExamples } from "./codeExamples";
 
 const columns: ColumnDef[] = [
   { key: "id", width: "6rem" },
+  { key: "customer", flex: 1, minWidth: "12rem" },
   { key: "category", width: "8rem" },
   { key: "amount", width: "7rem" },
   { key: "date", width: "7rem" },
-  { key: "status", width: "6rem" },
+  { key: "region", width: "5rem" },
+  { key: "priority", width: "7rem" },
+  { key: "status", width: "9rem" },
+  { key: "notes", flex: 2, minWidth: "16rem" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -18,6 +22,14 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "#3b82f6",
   pending: "#f59e0b",
   failed: "#ef4444",
+  cancelled: "#64748b",
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  low: "#64748b",
+  medium: "#06b6d4",
+  high: "#f59e0b",
+  critical: "#ef4444",
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -43,7 +55,32 @@ const CATEGORY_COLORS: Record<string, string> = {
   Telecom: "#2dd4bf",
 };
 
-function renderCell(value: unknown, column: string) {
+function Badge({ value, color }: { value: string; color: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "2px 8px",
+        borderRadius: 9999,
+        fontSize: "0.7rem",
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+        background: `${color}18`,
+        color,
+        border: `1px solid ${color}40`,
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
+function renderCell(
+  value: unknown,
+  column: string,
+  isExpanded: boolean,
+  onToggleExpand?: () => void,
+) {
   if (value == null) return "";
 
   if (column === "status") {
@@ -68,29 +105,32 @@ function renderCell(value: unknown, column: string) {
             flexShrink: 0,
           }}
         />
-        <span style={{ color }}>{str}</span>
+        <span style={{ color, fontWeight: 600 }}>{str}</span>
       </span>
     );
   }
 
+  if (column === "priority") {
+    const str = String(value);
+    return <Badge value={str} color={PRIORITY_COLORS[str] ?? "var(--muted-fg)"} />;
+  }
+
   if (column === "category") {
     const str = String(value);
-    const color = CATEGORY_COLORS[str] ?? "var(--muted-fg)";
+    return <Badge value={str} color={CATEGORY_COLORS[str] ?? "var(--muted-fg)"} />;
+  }
+
+  if (column === "region") {
     return (
       <span
         style={{
-          display: "inline-block",
-          padding: "2px 8px",
-          borderRadius: 9999,
-          fontSize: "0.7rem",
+          fontFamily: "SF Mono, Menlo, monospace",
+          fontSize: "0.72rem",
           fontWeight: 600,
-          letterSpacing: "0.02em",
-          background: `${color}18`,
-          color,
-          border: `1px solid ${color}40`,
+          color: "var(--muted-fg)",
         }}
       >
-        {str}
+        {String(value)}
       </span>
     );
   }
@@ -114,6 +154,16 @@ function renderCell(value: unknown, column: string) {
       >
         {Number(value).toLocaleString()}
       </span>
+    );
+  }
+
+  if (column === "notes") {
+    return (
+      <TextCell
+        value={value}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+      />
     );
   }
 
@@ -191,16 +241,27 @@ export function RubricsDemo() {
                         column={cell.column}
                         width={cell.width}
                         offset={cell.offset}
+                        onClick={
+                          cell.column === "notes"
+                            ? () => cell.onToggleExpand?.()
+                            : undefined
+                        }
                         style={{
                           padding: "8px 12px",
                           fontSize: "0.8rem",
                           lineHeight: "1.5",
                           color: "var(--fg)",
+                          cursor: cell.column === "notes" ? "pointer" : undefined,
                           display: "flex",
                           alignItems: "center",
                         }}
                       >
-                        {renderCell(cell.value, cell.column)}
+                        {renderCell(
+                          cell.value,
+                          cell.column,
+                          cell.isExpanded,
+                          cell.onToggleExpand,
+                        )}
                       </Table.Cell>
                     ))
                   }
@@ -213,7 +274,7 @@ export function RubricsDemo() {
 
       <CodeBlock
         code={codeExamples["knowledge-rubrics"]}
-        title="MillionRowDemo.tsx"
+        title="TableDemo.tsx"
       />
     </div>
   );

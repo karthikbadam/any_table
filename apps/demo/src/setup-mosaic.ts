@@ -56,7 +56,7 @@ export async function setupMosaic(): Promise<Coordinator> {
         'Automotive','Toys','Music','Movies','Software','Travel','Finance',
         'Education','Energy','Logistics','Retail','Telecom'])[1 + (i % 20)] AS category,
       round(random() * 10000, 2) AS amount,
-      ('2020-01-01'::DATE + (i % 1826))::VARCHAR AS date,
+      ('2020-01-01'::DATE + (i % 1826)::INTEGER)::VARCHAR AS date,
       (['active','pending','completed','failed'])[1 + (i % 4)] AS status
     FROM generate_series(1, 1000000) AS t(i)
   `);

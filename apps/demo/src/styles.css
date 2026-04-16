@@ -121,6 +121,20 @@ body {
   color: var(--accent);
 }
 
+/* ── Loading status spinner ── */
+.loading-status-spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  border-top-color: var(--accent);
+  animation: loading-status-spin 0.7s linear infinite;
+}
+
+@keyframes loading-status-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── JSON syntax highlighting ── */
 .json-key { color: var(--json-key); font-weight: 600; }
 .json-string { color: var(--json-string); }

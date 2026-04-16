@@ -62,5 +62,16 @@ export function DemoLoader({ demo, children }: DemoLoaderProps) {
     detail: STEP_SHOWS_TABLE[id] ? tableName : undefined,
   }));
 
-  return <LoadingStatus title={`Loading ${demo.title}`} steps={steps} />;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "50vh",
+      }}
+    >
+      <LoadingStatus steps={steps} />
+    </div>
+  );
 }

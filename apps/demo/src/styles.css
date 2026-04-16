@@ -123,10 +123,10 @@ body {
 
 /* ── Loading status spinner ── */
 .loading-status-spinner {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 1.5px solid var(--border-strong);
+  border: 1.5px solid var(--border);
   border-top-color: var(--accent);
   animation: loading-status-spin 0.7s linear infinite;
 }

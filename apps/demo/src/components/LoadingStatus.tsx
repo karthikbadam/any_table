@@ -10,14 +10,12 @@ export interface LoadingStep {
 }
 
 export interface LoadingStatusProps {
-  title: string;
   steps: LoadingStep[];
 }
 
-const iconBoxStyle: CSSProperties = {
-  width: 22,
-  height: 22,
-  borderRadius: 4,
+const iconSize: CSSProperties = {
+  width: 16,
+  height: 16,
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -25,52 +23,33 @@ const iconBoxStyle: CSSProperties = {
 };
 
 const PendingIcon = () => (
-  <span
-    style={{
-      ...iconBoxStyle,
-      border: "1px solid var(--border-strong)",
-      background: "var(--surface-2)",
-    }}
-    aria-label="pending"
-  >
+  <span style={iconSize} aria-label="pending">
     <span
       style={{
         width: 8,
         height: 8,
         borderRadius: "50%",
         border: "1.5px solid var(--muted-fg)",
-        opacity: 0.7,
+        opacity: 0.5,
       }}
     />
   </span>
 );
 
 const ActiveIcon = () => (
-  <span
-    style={{
-      ...iconBoxStyle,
-      border: "1px solid var(--border-strong)",
-      background: "var(--surface-2)",
-    }}
-    aria-label="loading"
-  >
+  <span style={iconSize} aria-label="loading">
     <span className="loading-status-spinner" />
   </span>
 );
 
 const DoneIcon = () => (
   <span
-    style={{
-      ...iconBoxStyle,
-      background: "var(--good-bg)",
-      border: "1px solid var(--good-fg)",
-      color: "var(--good-fg)",
-    }}
+    style={{ ...iconSize, color: "var(--good-fg)" }}
     aria-label="done"
   >
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
       <path
-        d="M2.5 6.2L4.8 8.5L9.5 3.5"
+        d="M3 7.2L5.6 9.8L11 4.2"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -86,69 +65,48 @@ function StepIcon({ state }: { state: LoadingStepState }) {
   return <PendingIcon />;
 }
 
-export function LoadingStatus({ title, steps }: LoadingStatusProps) {
+export function LoadingStatus({ steps }: LoadingStatusProps) {
   return (
-    <div
+    <ul
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 20,
-        padding: "2rem",
-        maxWidth: 520,
+        gap: 12,
+        listStyle: "none",
+        padding: 0,
+        margin: 0,
       }}
     >
-      <h2
-        style={{
-          fontSize: "1.125rem",
-          fontWeight: 600,
-          color: "var(--fg)",
-          margin: 0,
-        }}
-      >
-        {title}
-      </h2>
-      <ul
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 14,
-          listStyle: "none",
-          padding: 0,
-          margin: 0,
-        }}
-      >
-        {steps.map((step) => {
-          const isActive = step.state === "active";
-          const isPending = step.state === "pending";
-          return (
-            <li
-              key={step.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                fontSize: "0.95rem",
-                color: isPending ? "var(--muted-fg)" : "var(--fg)",
-                fontWeight: isActive ? 600 : 400,
-              }}
-            >
-              <StepIcon state={step.state} />
-              <span>{step.label}</span>
-              {step.detail && isActive && (
-                <span
-                  style={{
-                    color: "var(--accent)",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  ({step.detail})
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+      {steps.map((step) => {
+        const isActive = step.state === "active";
+        const isPending = step.state === "pending";
+        return (
+          <li
+            key={step.id}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontSize: "0.875rem",
+              color: isPending ? "var(--muted-fg)" : "var(--fg)",
+              fontWeight: isActive ? 600 : 400,
+            }}
+          >
+            <StepIcon state={step.state} />
+            <span>{step.label}</span>
+            {step.detail && isActive && (
+              <span
+                style={{
+                  color: "var(--accent)",
+                  fontWeight: 600,
+                }}
+              >
+                ({step.detail})
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

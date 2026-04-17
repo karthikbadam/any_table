@@ -6,11 +6,12 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "pnpm --filter @any_table/core run build && pnpm --filter @any_table/react run build",
+    "build": "pnpm --filter @any_table/core run build && pnpm --filter @any_table/spec run build && pnpm --filter @any_table/react run build && pnpm --filter @any_table/mcp run build",
     "build:demo": "pnpm run build && GITHUB_PAGES=1 pnpm --filter demo build",
     "deploy": "pnpm run build:demo && npx gh-pages -d apps/demo/dist -b gh-pages",
     "dev": "pnpm --filter demo dev",
-    "test": "echo \"No tests yet\""
+    "test": "pnpm -r --stream run test",
+    "typecheck": "pnpm -r --parallel exec tsc --noEmit"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

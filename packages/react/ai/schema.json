@@ -1,0 +1,284 @@
+{
+  "$id": "https://any-table.dev/ai/schema.json",
+  "title": "AnyTable TableSpec",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "string",
+          "pattern": "^\\..*"
+        }
+      ]
+    },
+    "data": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "table": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "table"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            }
+          },
+          "required": [
+            "rows"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "rowKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "columns": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(\\d+(\\.\\d+)?(px|%|rem|em))|auto$"
+              }
+            ]
+          },
+          "flex": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minWidth": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(\\d+(\\.\\d+)?(px|%|rem|em))|auto$"
+              }
+            ]
+          },
+          "maxWidth": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(\\d+(\\.\\d+)?(px|%|rem|em))|auto$"
+              }
+            ]
+          },
+          "cell": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "options": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "sortable": {
+            "type": "boolean"
+          },
+          "align": {
+            "type": "string",
+            "enum": [
+              "left",
+              "right",
+              "center"
+            ]
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "expansion": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "expandedRowHeight": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "selection": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "single",
+                "multi"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "sort": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "column": {
+              "type": "string",
+              "minLength": 1
+            },
+            "desc": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "column"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "column": {
+                "type": "string",
+                "minLength": 1
+              },
+              "desc": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "column"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "rowHeight": {
+      "type": "object",
+      "properties": {
+        "lineHeight": {
+          "type": "string"
+        },
+        "numLines": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "padding": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "height": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "width": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark",
+        "auto"
+      ]
+    }
+  },
+  "required": [
+    "data",
+    "rowKey",
+    "columns"
+  ],
+  "additionalProperties": false,
+  "description": "AnyTable declarative spec — the JSON shape an LLM can emit to render a complete table."
+}

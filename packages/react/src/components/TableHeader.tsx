@@ -30,6 +30,7 @@ export function TableHeader({ children, className, style }: TableHeaderProps) {
           display: 'flex',
           position: 'relative',
           width: layout.totalWidth,
+          height: '100%',
         }}
       >
         {children({ columns: layout.resolved })}

@@ -1,4 +1,108 @@
 export const codeExamples: Record<string, string> = {
+  "declarative-spec": `import { AnyTable, diagnoseConfig, type TableSpec } from "@any_table/react";
+
+// Everything the LLM needs to emit — no JSX render props,
+// no container ref, no \`useTable\` call.
+const spec: TableSpec = {
+  data: { table: "open_rubrics" },
+  rowKey: "instruction",
+  expansion: { expandedRowHeight: 300 },
+  height: "62vh",
+  columns: [
+    { key: "source",      width: "6rem", cell: "text" },
+    { key: "winner",      width: "2rem",
+      cell: { name: "enumBadge",
+              options: { map: { A: "accent", B: "bad" } } } },
+    { key: "instruction", flex: 3, minWidth: "12rem", cell: "text" },
+    { key: "response_a",  flex: 2, minWidth: "10rem", cell: "text" },
+    { key: "response_b",  flex: 2, minWidth: "10rem", cell: "text" },
+    { key: "rubric",      flex: 2, minWidth: "10rem", cell: "text" },
+  ],
+};
+
+export function DeclarativeDemo() {
+  // Validate once at build or render time; diagnoseConfig never throws.
+  const { errors, warnings } = diagnoseConfig(spec);
+  if (errors.length) console.error(errors);
+  if (warnings.length) console.warn(warnings);
+
+  return <AnyTable spec={spec} />;
+}`,
+
+  "declarative-cells": `import {
+  AnyTable,
+  hasCell,
+  registerCell,
+  type TableSpec,
+} from "@any_table/react";
+
+// Register a custom cell ONCE at module load. The spec below references it
+// by the string name \`sparklineSvg\` — the LLM never authors JSX.
+if (!hasCell("sparklineSvg")) {
+  registerCell("sparklineSvg", ({ value }) => {
+    const data = value as number[];
+    /* ...build SVG from data... */
+    return <svg>{/* ... */}</svg>;
+  });
+}
+
+const spec: TableSpec = {
+  data: { rows },
+  rowKey: "id",
+  height: "60vh",
+  expansion: { expandedRowHeight: 260 },
+  columns: [
+    { key: "id",       width: "5rem",  cell: "text" },
+    { key: "name",     flex: 1, minWidth: "9rem", cell: "text" },
+    { key: "requests", width: "7rem",  cell: "number", align: "right" },
+    { key: "deployed", width: "9rem",  cell: "date" },
+    { key: "healthy",  width: "5rem",  cell: "boolean" },
+    { key: "tier",     width: "5rem",
+      cell: { name: "enumBadge",
+              options: { map: { gold: "accent", silver: "muted",
+                                bronze: "warn" } } } },
+    { key: "labels",   width: "10rem", cell: "list" },
+    { key: "owner",    width: "12rem", cell: "struct" },
+    { key: "config",   flex: 2, minWidth: "14rem", cell: "json" },
+    { key: "trend",    width: "9rem",  cell: "sparklineSvg",
+      sortable: false },
+  ],
+};
+
+export function DeclarativeCellsDemo() {
+  return <AnyTable spec={spec} />;
+}`,
+
+  "declarative-validation": `import { AnyTable, diagnoseConfig } from "@any_table/react";
+import { useMemo, useState } from "react";
+
+export function DeclarativeValidationDemo() {
+  const [text, setText] = useState(JSON.stringify(exampleSpec, null, 2));
+
+  const { spec, parseError } = useMemo(() => {
+    try { return { spec: JSON.parse(text), parseError: null }; }
+    catch (err) { return { spec: null,
+                            parseError: (err as Error).message }; }
+  }, [text]);
+
+  const diagnostics = useMemo(() => {
+    if (parseError) return { errors: [], warnings: [] };
+    return diagnoseConfig(spec);
+  }, [spec, parseError]);
+
+  const canRender =
+    !parseError && diagnostics.errors.length === 0;
+
+  return (
+    <>
+      <textarea value={text}
+                onChange={(e) => setText(e.target.value)} />
+      {canRender && <AnyTable spec={spec} />}
+      <DiagnosePanel diagnostics={diagnostics} />
+    </>
+  );
+}`,
+
   "knowledge-rubrics": `import type { ColumnDef } from "@any_table/react";
 import { Table, TextCell, useTable } from "@any_table/react";
 import { useRef } from "react";

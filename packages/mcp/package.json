@@ -1,0 +1,37 @@
+{
+  "name": "@any_table/mcp",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "description": "MCP server exposing @any_table/react as tools for LLMs (Claude, Cursor, etc.)",
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "bin": {
+    "any-table-mcp": "./bin/any-table-mcp.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/karthikbadam/any_table.git",
+    "directory": "packages/mcp"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@any_table/react": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.8"
+  }
+}

@@ -60,6 +60,33 @@ export const categories: NavCategory[] = [
       },
     ],
   },
+  {
+    label: "Developer Efficiency",
+    items: [
+      {
+        id: "declarative-spec",
+        title: "Declarative spec",
+        description:
+          "The same 11,349-row rubrics table, but rendered from a single JSON TableSpec — no JSX render props. This is the surface an LLM emits when you ask it to render a table with any_table. The spec plus diagnoseConfig output are shown side-by-side.",
+        enabled: true,
+        datasets: ["open_rubrics"],
+      },
+      {
+        id: "declarative-cells",
+        title: "Built-in cells",
+        description:
+          "Every built-in cell renderer (text, number, date, boolean, json, list, struct, enumBadge) plus a custom cell registered via registerCell(), all wired through a single JSON spec — no JSX.",
+        enabled: true,
+      },
+      {
+        id: "declarative-validation",
+        title: "Live validation",
+        description:
+          "Edit a spec live and watch diagnoseConfig catch schema errors, unknown cells, flex/width conflicts, sort typos, non-serializable options, and more. Errors block rendering; warnings are advisory. Same validator the MCP server exposes.",
+        enabled: true,
+      },
+    ],
+  },
 ];
 
 export const DEFAULT_DEMO_ID = "knowledge-rubrics";

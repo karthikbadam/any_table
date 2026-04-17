@@ -17,7 +17,41 @@ A headless, virtualized React table for large datasets.
 ## Packages
 
 - `@any_table/core` — Framework-agnostic TypeScript: type system, layout algorithm, scroll math, sparse data model, Mosaic clients
-- `@any_table/react` — React hooks and compound components
+- `@any_table/spec` — Pure-TS Zod schema and diagnostics for the declarative `TableSpec`. No React; consumed by both `@any_table/react` and `@any_table/mcp`
+- `@any_table/react` — React hooks and compound components, plus the declarative `<AnyTable spec={...}/>` layer
+- `@any_table/mcp` — MCP server exposing `any_table_get_schema`, `any_table_list_cells`, `any_table_validate_spec`, `any_table_render_table` tools so LLMs (Claude, Cursor) can drive AnyTable directly
+
+## AI-first
+
+AnyTable ships a declarative surface designed for LLM code generation. An LLM
+can emit a single JSON `TableSpec` and hand it to `<AnyTable spec={...} />`
+without authoring any JSX.
+
+- Research + rationale: [`docs/ai-first-research.md`](docs/ai-first-research.md)
+- Flat LLM reference: [`packages/react/ai/llms.txt`](packages/react/ai/llms.txt)
+- Claude-specific conventions: [`packages/react/ai/claude.md`](packages/react/ai/claude.md)
+- JSON Schema: [`packages/react/ai/schema.json`](packages/react/ai/schema.json)
+
+```tsx
+import { AnyTable, type TableSpec } from "@any_table/react";
+
+const spec: TableSpec = {
+  data: { rows: [{ id: 1, name: "Ada" }] },
+  rowKey: "id",
+  columns: [
+    { key: "id", width: "4rem", cell: "number" },
+    { key: "name", flex: 1, cell: "text" },
+  ],
+};
+
+<AnyTable spec={spec} />
+```
+
+Add the MCP server to Claude Code to let the model call into AnyTable directly:
+
+```bash
+claude mcp add any-table -- npx -y @any_table/mcp
+```
 
 ## Try the Demo
 

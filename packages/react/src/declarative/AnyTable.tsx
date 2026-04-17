@@ -89,14 +89,36 @@ export function AnyTable(props: AnyTableProps) {
   return (
     <div ref={containerRef as React.RefObject<HTMLDivElement>} className={className} style={containerStyle} data-any-table-theme={spec.theme}>
       <TableRoot {...table.rootProps}>
-        <TableHeader>
+        <TableHeader
+          style={{
+            // Give the header an explicit height. TableHeaderCell is absolutely
+            // positioned, so without this the parent collapses to 0 and the
+            // header is invisible. 2.5rem matches the default row feel.
+            height: '2.5rem',
+            padding: '0 4px',
+            background: 'var(--surface, #fff)',
+            borderBottom: '1px solid var(--border, #e5e7eb)',
+            flex: '0 0 auto',
+          }}
+        >
           {({ columns: cols }) =>
             cols.map((col) => {
               const colSpec = columnByKey.get(col.key);
               const label = colSpec?.label ?? defaultLabel(col.key);
               const sortable = colSpec?.sortable ?? true;
               return (
-                <TableHeaderCell key={col.key} column={col.key}>
+                <TableHeaderCell
+                  key={col.key}
+                  column={col.key}
+                  style={{
+                    padding: '0 8px',
+                    fontWeight: 600,
+                    fontSize: '0.72rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    color: 'var(--muted-fg, #6b7280)',
+                  }}
+                >
                   {sortable ? (
                     <SortTrigger column={col.key}>{label}</SortTrigger>
                   ) : (
@@ -111,7 +133,13 @@ export function AnyTable(props: AnyTableProps) {
         <TableViewport>
           {({ rows }) =>
             rows.map((row) => (
-              <TableRow key={row.key} row={row}>
+              <TableRow
+                key={row.key}
+                row={row}
+                style={{
+                  borderBottom: '1px solid var(--border, #e5e7eb)',
+                }}
+              >
                 {({ cells }) =>
                   cells.map((cell) => {
                     const colSpec = columnByKey.get(cell.column);
@@ -134,6 +162,7 @@ export function AnyTable(props: AnyTableProps) {
                           padding: '8px 12px',
                           fontSize: '0.8rem',
                           lineHeight: 1.5,
+                          color: 'var(--fg)',
                           cursor: cell.onToggleExpand ? 'pointer' : 'default',
                         }}
                       >

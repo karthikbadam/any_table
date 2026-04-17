@@ -2,11 +2,6 @@ const REPO = "https://github.com/karthikbadam/any_table/blob/claude/research-sem
 
 const LINKS: Array<{ href: string; label: string; hint: string }> = [
   {
-    href: `${REPO}/docs/ai-first-research.md`,
-    label: "Research doc",
-    hint: "Why any_table is AI-first (mapped from nteract/semiotic).",
-  },
-  {
     href: `${REPO}/packages/react/ai/llms.txt`,
     label: "llms.txt",
     hint: "Flat reference for LLM generation. Paste into Claude or Cursor.",

@@ -58,3 +58,35 @@ export { BooleanCell } from './components/cells/BooleanCell';
 export { JsonCell } from './components/cells/JsonCell';
 export { ListCell } from './components/cells/ListCell';
 export { StructCell } from './components/cells/StructCell';
+
+// Declarative (AI-first) API
+export {
+  AnyTable,
+  registerCell,
+  getCell,
+  hasCell,
+  listCells,
+  diagnoseConfig,
+  TableSpecSchema,
+  toJsonSchema,
+  BUILTIN_CELLS,
+  BUILTIN_CELL_NAMES,
+  isBuiltinCellName,
+  type AnyTableProps,
+  type TableSpec,
+  type ColumnSpec,
+  type CellSpec,
+  type ColumnCell,
+  type BuiltinCellName,
+  type TableDataSource,
+  type ExpansionSpec,
+  type SelectionSpec,
+  type SortSpec,
+  type CellContext,
+  type CellRenderer,
+  type Diagnostic,
+  type DiagnoseResult,
+  type DiagnoseOptions,
+  type InferredTableSpec,
+  type BuiltinCellInfo,
+} from './declarative';

@@ -26,6 +26,14 @@ export const categories: NavCategory[] = [
         datasets: ["open_rubrics"],
       },
       {
+        id: "declarative",
+        title: "Declarative (AI-first)",
+        description:
+          "The same table rendered from a single JSON TableSpec — no JSX render props. This is the surface an LLM can emit directly.",
+        enabled: true,
+        datasets: ["open_rubrics"],
+      },
+      {
         id: "custom-cells",
         title: "Custom Cells",
         description: "Custom cell renderers including inline sparkline charts, colored badges, and status indicators. Uses local data with no DuckDB dependency.",

@@ -1,8 +1,11 @@
+import type { DatasetId } from "../setup-mosaic";
+
 export interface NavItem {
   id: string;
   title: string;
   description: string;
   enabled: boolean;
+  datasets?: DatasetId[];
 }
 
 export interface NavCategory {
@@ -20,6 +23,7 @@ export const categories: NavCategory[] = [
         description:
           "A sortable, virtualized table with expandable text cells. Renders 11,349 rows from the open_rubrics dataset containing rubrics with instruction/response pairs and winner labels.",
         enabled: true,
+        datasets: ["open_rubrics"],
       },
       {
         id: "custom-cells",
@@ -38,18 +42,21 @@ export const categories: NavCategory[] = [
         description:
           "Multi-row selection with checkbox controls, expandable JSON tree cells, and a record detail dialog. Renders 300 rows from the swe_bench dataset containing execution traces with scores, status labels, and nested JSON payloads.",
         enabled: true,
+        datasets: ["swe_bench"],
       },
       {
         id: "cross-filtering",
         title: "Cross-Filtering",
         description: "Two bar charts and a table share a Mosaic crossfilter Selection. Clicking a bar in one chart filters the other chart and the table — demonstrating coordinated multi-view interaction over DuckDB.",
         enabled: true,
+        datasets: ["open_rubrics"],
       },
       {
         id: "search",
         title: "Search",
         description: "Full-text search over 11K rows with three modes: contains (ILIKE), exact match, and regex. Powered by DuckDB SQL filtering via Mosaic Selection.",
         enabled: true,
+        datasets: ["open_rubrics"],
       },
     ],
   },

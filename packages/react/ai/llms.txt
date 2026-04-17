@@ -1,0 +1,154 @@
+# @any_table/react — LLM Quick Reference
+
+AnyTable is a headless, virtualized React table backed by DuckDB-WASM + Mosaic.
+This page describes the **declarative API**: the JSON surface an LLM should emit.
+
+## One-line install
+
+```bash
+pnpm add @any_table/react
+```
+
+Peer deps: `react@>=18`, `react-dom@>=18`. Mosaic peers (`@uwdata/mosaic-core`,
+`@uwdata/mosaic-sql`) are optional and only needed when using `data.table`.
+
+## Minimal usage
+
+```tsx
+import { AnyTable, type TableSpec } from "@any_table/react";
+
+const spec: TableSpec = {
+  data: { rows: [{ id: 1, name: "Ada" }, { id: 2, name: "Linus" }] },
+  rowKey: "id",
+  columns: [
+    { key: "id",   width: "4rem", cell: "number" },
+    { key: "name", flex: 1,       cell: "text"   },
+  ],
+};
+
+export default function App() {
+  return <AnyTable spec={spec} />;
+}
+```
+
+## Universal vocabulary
+
+Every TableSpec uses the same top-level keys — learn them once:
+
+| key        | type                                        | notes                                       |
+| ---------- | ------------------------------------------- | ------------------------------------------- |
+| data       | `{ table: string } \| { rows: object[] }`   | Pick one. `table` requires MosaicProvider.  |
+| rowKey     | string                                      | Must be a column key or a field on rows.    |
+| columns    | ColumnSpec[]                                | See below.                                  |
+| expansion  | boolean \| `{ expandedRowHeight?: number }` | Expandable cells on row click.              |
+| selection  | boolean \| `{ mode?: 'single' \| 'multi' }` | Row selection via checkbox + aria.          |
+| sort       | SortSpec \| SortSpec[]                      | `{ column, desc? }`. Columns must exist.    |
+| rowHeight  | `{ lineHeight?, numLines?, padding? }`      | Controls unexpanded row height.             |
+| height     | number \| string                            | Container height. Prefer "60vh" or number.  |
+| width      | number \| string                            | Defaults to "100%".                         |
+| theme      | 'light' \| 'dark' \| 'auto'                 | Optional data-attribute for custom CSS.     |
+
+## ColumnSpec
+
+```ts
+{
+  key: string;              // required; must match a field in the data
+  label?: string;           // header text; default = key.replace(/_/g, ' ')
+  width?: ColumnWidth;      // "6rem" | "50%" | number (px) | "auto"
+  flex?: number;            // share of remaining space; mutually exclusive with width
+  minWidth?: ColumnWidth;
+  maxWidth?: ColumnWidth;
+  cell?: ColumnCell;        // see "Cells" below; default = "text"
+  sortable?: boolean;       // default true
+  align?: 'left' | 'right' | 'center';
+}
+```
+
+## Cells
+
+Use a **string** for built-ins, or `{ name, options }` for parameterized cells.
+
+Built-in names:
+
+- `text`       — default; shows string with 3-line clamp + expand-on-click
+- `number`     — right-aligned, tabular nums, Intl formatter
+- `date`       — localized date
+- `boolean`    — checkbox (readonly)
+- `json`       — JSON preview; recursive tree on expand
+- `list`       — bullet preview for arrays
+- `struct`     — key/value preview for plain objects
+- `enumBadge`  — colored badge; `options: { map: { "A": "accent" }, neutral?: string }`
+
+Register custom cells once at module load:
+
+```ts
+import { registerCell } from "@any_table/react";
+
+registerCell("sparkline", ({ value }) => <Spark data={value as number[]} />);
+// then use: { key: "trend", cell: "sparkline" }
+```
+
+`cell.options` must be JSON-serializable. Functions, bigints, and cycles are errors.
+
+## Data sources
+
+- **Client-side**: `data: { rows: [...] }` — pass an array of plain objects. Good
+  for small datasets and demos; no DuckDB needed.
+- **DuckDB/Mosaic**: `data: { table: "open_rubrics" }` — wrap your app in
+  `<MosaicProvider coordinator={...}>`. `useTable` / `<AnyTable>` will query and
+  virtualize millions of rows.
+
+## Validation
+
+Before rendering, validate the spec:
+
+```ts
+import { diagnoseConfig } from "@any_table/react";
+
+const { errors, warnings } = diagnoseConfig(spec);
+if (errors.length) throw new Error(errors[0].message);
+```
+
+`diagnoseConfig` returns `{ errors, warnings }` with `{ code, message, path? }`.
+It runs Zod shape validation plus 11 semantic checks. See JSON Schema at
+`@any_table/react/ai/schema.json`.
+
+## Rules for LLMs
+
+1. **Emit JSON only.** Never write JSX render props. If the user wants
+   customization, propose a new cell name and register it once.
+2. **Prefer `cell: "text"` by default.** Only use `number`, `date`, `boolean`,
+   `json`, `list`, `struct` when the column's data matches.
+3. **One expansion per row.** When cells can be long (text/json), set
+   `expansion: { expandedRowHeight: 300 }`.
+4. **Flex + width are mutually exclusive.** Use `flex: N` for stretchy columns
+   and `width: "6rem"` (or similar) for fixed ones; never both.
+5. **Container height is required for virtualization.** If the spec renders in a
+   parent without a height, set `height: "60vh"` on the spec.
+6. **Sort columns must exist.** Every `sort.column` string has to appear in
+   `columns[].key`.
+7. **`rowKey` should be a column.** Prefer an id column; fall back to a unique
+   text column.
+8. **Unknown keys are warnings, not hard failures.** Stick to the vocabulary
+   above.
+
+## Anti-patterns (diagnoseConfig will flag)
+
+- Duplicate column keys.
+- Unknown `cell` names (falls back to `text`).
+- `flex` and `width` both set (width wins).
+- `sort.column` not in columns.
+- Non-serializable values in `cell.options`.
+- `selection: true` without `rowKey`.
+- `height: "100%"` without an explicit parent height.
+- `expansion.expandedRowHeight` smaller than the unexpanded row.
+- More than 50 columns (perf warn).
+
+## Related exports
+
+- `AnyTable` — the declarative component.
+- `registerCell`, `getCell`, `listCells` — cell registry.
+- `diagnoseConfig` — validator.
+- `TableSpec`, `ColumnSpec`, `CellSpec` — types.
+- Low-level `useTable` + `Table.*` compound components remain available as an
+  escape hatch for custom layouts.

@@ -1,5 +1,9 @@
-import { AnyTable, type TableSpec } from "@any_table/react";
+import { AnyTable, diagnoseConfig, type TableSpec } from "@any_table/react";
+import { useMemo } from "react";
+import { AiFirstBanner } from "../components/AiFirstBanner";
 import { CodeBlock } from "../components/CodeBlock";
+import { DiagnosePanel } from "../components/DiagnosePanel";
+import { codeExamples } from "./codeExamples";
 
 const spec: TableSpec = {
   $schema: "../../../packages/react/ai/schema.json",
@@ -24,18 +28,14 @@ const spec: TableSpec = {
   ],
 };
 
-const codeSample = `import { AnyTable, type TableSpec } from "@any_table/react";
-
-const spec: TableSpec = ${JSON.stringify(spec, null, 2)};
-
 export function DeclarativeDemo() {
-  return <AnyTable spec={spec} />;
-}
-`;
+  const diagnostics = useMemo(() => diagnoseConfig(spec), []);
+  const specJson = useMemo(() => JSON.stringify(spec, null, 2), []);
 
-export function DeclarativeDemo() {
   return (
     <div className="demo-content">
+      <AiFirstBanner />
+
       <AnyTable
         spec={spec}
         style={{
@@ -44,7 +44,15 @@ export function DeclarativeDemo() {
           background: "var(--surface)",
         }}
       />
-      <CodeBlock code={codeSample} title="DeclarativeDemo.tsx" />
+
+      <DiagnosePanel diagnostics={diagnostics} />
+
+      <CodeBlock code={specJson} title="TableSpec (JSON)" />
+
+      <CodeBlock
+        code={codeExamples["declarative-spec"]}
+        title="DeclarativeDemo.tsx"
+      />
     </div>
   );
 }

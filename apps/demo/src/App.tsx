@@ -6,7 +6,9 @@ import { categories, DEFAULT_DEMO_ID, findNavItem } from "./config/nav";
 import { DatasetLoadingProvider } from "./context/DatasetLoadingContext";
 import { CrossFilterDemo } from "./demos/CrossFilterDemo";
 import { CustomCellsDemo } from "./demos/CustomCellsDemo";
+import { DeclarativeCellsDemo } from "./demos/DeclarativeCellsDemo";
 import { DeclarativeDemo } from "./demos/DeclarativeDemo";
+import { DeclarativeValidationDemo } from "./demos/DeclarativeValidationDemo";
 import { RubricsDemo } from "./demos/RubricsDemo";
 import { SearchDemo } from "./demos/SearchDemo";
 import { TracesDemo } from "./demos/TracesDemo";
@@ -59,9 +61,13 @@ export default function App() {
           ? SearchDemo
           : active.id === "cross-filtering"
             ? CrossFilterDemo
-            : active.id === "declarative"
+            : active.id === "declarative-spec"
               ? DeclarativeDemo
-              : RubricsDemo;
+              : active.id === "declarative-cells"
+                ? DeclarativeCellsDemo
+                : active.id === "declarative-validation"
+                  ? DeclarativeValidationDemo
+                  : RubricsDemo;
 
   return (
     <MosaicProvider coordinator={handle?.coordinator ?? null}>

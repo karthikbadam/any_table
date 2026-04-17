@@ -1,4 +1,4 @@
-const REPO = "https://github.com/karthikbadam/any_table/blob/claude/research-semiotic-ai-0foZe";
+const REPO = "https://github.com/karthikbadam/any_table/blob/main";
 
 const LINKS: Array<{ href: string; label: string; hint: string }> = [
   {

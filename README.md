@@ -21,9 +21,11 @@ A headless, virtualized React table for large datasets.
 - `@any_table/react` — React hooks and compound components, plus the declarative `<AnyTable spec={...}/>` layer
 - `@any_table/mcp` — MCP server exposing `any_table_get_schema`, `any_table_list_cells`, `any_table_validate_spec`, `any_table_render_table` tools so LLMs (Claude, Cursor) can drive AnyTable directly
 
-## AI-first
+## Developer Efficiency
 
-AnyTable ships a declarative surface designed for LLM code generation. An LLM
+> _Inspired by [Semiotic](https://semiotic.nteract.io/)_
+
+AnyTable provides a declarative surface for fast prototyping, automation, and LLM-driven development. You (or an LLM)
 can emit a single JSON `TableSpec` and hand it to `<AnyTable spec={...} />`
 without authoring any JSX.
 
@@ -43,7 +45,7 @@ const spec: TableSpec = {
   ],
 };
 
-<AnyTable spec={spec} />
+<AnyTable spec={spec} />;
 ```
 
 Add the MCP server to Claude Code to let the model call into AnyTable directly:

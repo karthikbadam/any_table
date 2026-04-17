@@ -1,6 +1,6 @@
 {
   "name": "@any_table/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "type": "module",
   "description": "MCP server exposing @any_table/react as tools for LLMs (Claude, Cursor, etc.)",

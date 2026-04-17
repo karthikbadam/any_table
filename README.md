@@ -27,7 +27,6 @@ AnyTable ships a declarative surface designed for LLM code generation. An LLM
 can emit a single JSON `TableSpec` and hand it to `<AnyTable spec={...} />`
 without authoring any JSX.
 
-- Research + rationale: [`docs/ai-first-research.md`](docs/ai-first-research.md)
 - Flat LLM reference: [`packages/react/ai/llms.txt`](packages/react/ai/llms.txt)
 - Claude-specific conventions: [`packages/react/ai/claude.md`](packages/react/ai/claude.md)
 - JSON Schema: [`packages/react/ai/schema.json`](packages/react/ai/schema.json)

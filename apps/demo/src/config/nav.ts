@@ -61,7 +61,7 @@ export const categories: NavCategory[] = [
     ],
   },
   {
-    label: "AI-first",
+    label: "Developer Efficiency",
     items: [
       {
         id: "declarative-spec",

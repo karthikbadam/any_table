@@ -45,7 +45,7 @@ export function AiFirstBanner() {
           fontWeight: 600,
         }}
       >
-        AI-first resources
+        Developer Efficiency resources
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {LINKS.map((l) => (

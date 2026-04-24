@@ -28,6 +28,7 @@ export interface DatasetLoadingState {
   loaded: Set<DatasetId>;
   progress: Record<string, DatasetProgress>;
   ensure: (ids: DatasetId[] | undefined) => void;
+  handle: DuckDBHandle | null;
 }
 
 const DatasetLoadingContext = createContext<DatasetLoadingState | null>(null);
@@ -97,8 +98,8 @@ export function DatasetLoadingProvider({
   }, [handle, pendingTick, loaded]);
 
   const value = useMemo<DatasetLoadingState>(
-    () => ({ duckReady, loaded, progress, ensure }),
-    [duckReady, loaded, progress, ensure],
+    () => ({ duckReady, loaded, progress, ensure, handle }),
+    [duckReady, loaded, progress, ensure, handle],
   );
 
   return (

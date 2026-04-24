@@ -1,24 +1,27 @@
 # @any_table/react
 
-React hooks and compound components for building virtualized tables. Renders large datasets at 60fps using DuckDB-WASM + Mosaic or plain arrays.
+React hooks and compound components for building virtualized tables. Renders large datasets at 60fps on top of one of three pluggable in-browser stores: `DuckDBStore` (SQL via DuckDB-WASM + Mosaic), `HyparquetStore` (pure-JS Parquet), or `JSStore` (plain rows or a local File).
 
 ## Install
 
 ```bash
 npm install @any_table/react @any_table/core
+# plus optional peers for the store(s) you use:
+npm install @uwdata/mosaic-core @uwdata/mosaic-sql  # for DuckDBStore
+npm install hyparquet                               # for HyparquetStore
 ```
 
 ## Usage with DuckDB + Mosaic
 
 ```tsx
 import { useRef } from "react";
-import { MosaicProvider, useTable, Table } from "@any_table/react";
+import { TableStoreProvider, useTable, Table } from "@any_table/react";
 
 function App() {
   return (
-    <MosaicProvider coordinator={coordinator}>
+    <TableStoreProvider coordinator={coordinator}>
       <OrdersTable />
-    </MosaicProvider>
+    </TableStoreProvider>
   );
 }
 
@@ -97,6 +100,65 @@ const table = useTable({
 ```
 
 The `Table.Root` / `Table.Header` / `Table.Viewport` markup stays the same.
+
+## Usage with a Parquet URL (hyparquet)
+
+```tsx
+import { HyparquetStore, TableStoreProvider, useTable, Table } from "@any_table/react";
+
+const planetsStore = new HyparquetStore({
+  tableName: "planets",
+  source: { kind: "url", url: "/planets.parquet" },
+});
+
+<TableStoreProvider stores={[planetsStore]}>
+  <App />
+</TableStoreProvider>
+```
+
+In `App`, use `useTable({ table: "planets", … })` exactly as before.
+
+## Usage with a local File
+
+```tsx
+import { JSStore, useTable } from "@any_table/react";
+
+function onFile(file: File) {
+  const store = new JSStore({
+    tableName: file.name,
+    source: { kind: "file", file, format: "csv" },
+  });
+  // pass the store directly:
+  useTable({ store, columns, rowKey: "id", containerRef });
+}
+```
+
+## Providers
+
+- `<TableStoreProvider coordinator={coordinator} stores={[…]} resources={{ … }}>` — primary provider. Accepts any combination of a Mosaic coordinator (auto-wraps unresolved table names in `DuckDBStore`), explicit stores, and named resources (File/Blob) referenced from `TableSpec.data` variants.
+- `<MosaicProvider coordinator={…}>` — thin compat alias that forwards to `<TableStoreProvider>`.
+
+## Filters across stores
+
+Build a `PortableFilter` once and pass it to any store:
+
+```tsx
+import { portableFilter, type PortableFilter } from "@any_table/react";
+
+const search: PortableFilter = {
+  op: "or",
+  clauses: columns.map((c) => ({
+    op: "contains",
+    column: c,
+    value: query,
+    caseInsensitive: true,
+  })),
+};
+
+<AnyTable spec={spec} filter={portableFilter(search)} />
+```
+
+Mosaic `Selection` objects still work with `DuckDBStore` — the other two stores throw a helpful error that points you at `PortableFilter`.
 
 ## License
 

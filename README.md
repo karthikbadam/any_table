@@ -2,9 +2,24 @@
 
 A headless, virtualized React table for large datasets.
 
+## Stores
+
+AnyTable reads from one of three in-browser **stores**. Pick based on how your data arrives:
+
+| Feature | `DuckDBStore` | `HyparquetStore` | `JSStore` |
+|---|---|---|---|
+| Sources | Parquet, CSV, JSON, any registered table | Parquet (URL / File / ArrayBuffer) | `RowRecord[]`, File (JSON / NDJSON / CSV) |
+| Filter pushdown | Yes (SQL) | No (in-memory) | No (in-memory) |
+| Cross-filter / Mosaic `Selection` | Yes | No | No |
+| `PortableFilter` AST | Yes | Yes | Yes |
+| Large data (>1M rows) | Recommended | OK (streamed windows) | Not recommended |
+| Bundle cost | `@duckdb/duckdb-wasm` + Mosaic | `hyparquet` (small) | Zero |
+
+The "Same data, three stores" demo renders a single dataset through all three stores side-by-side so you can see parity and perf differences.
+
 ## Guiding Principles
 
-**DuckDB-powered, visualization-friendly.** DuckDB-WASM is the in-browser store and query engine. The data layer uses [Mosaic](https://uwdata.github.io/mosaic/) natively, enabling seamless coordination between views and making it a first-class partner for visualization libraries.
+**Pluggable data sources.** The `TableStore` interface abstracts over DuckDB-WASM, hyparquet, and plain JS rows/files. Choose per table; mix freely. Mosaic (via `DuckDBStore`) remains a first-class partner for visualization.
 
 **React-idiomatic surface with performant internals.** You write normal React. Under the hood, scroll and positioning bypass React's render cycle for 60fps. These optimizations are invisible.
 
@@ -69,7 +84,7 @@ pnpm dev
 ## Quick Start
 
 ```tsx
-import { useTable, Table, MosaicProvider } from "@any_table/react";
+import { useTable, Table, TableStoreProvider } from "@any_table/react";
 
 function MyTable() {
   const containerRef = useRef<HTMLDivElement>(null);

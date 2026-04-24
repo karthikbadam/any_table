@@ -321,6 +321,25 @@ export function CrossFilterDemo() {
     <div className="demo-content">
       <div
         style={{
+          padding: "8px 12px",
+          marginBottom: 12,
+          border: "1px solid var(--border)",
+          borderLeft: "3px solid var(--accent, #3b82f6)",
+          borderRadius: 4,
+          background: "var(--surface-2)",
+          color: "var(--muted-fg)",
+          fontSize: "0.78rem",
+          lineHeight: 1.5,
+        }}
+      >
+        <strong style={{ color: "var(--fg)" }}>DuckDB store only.</strong>{" "}
+        Cross-filter here uses Mosaic <code>Selection</code> to coordinate SQL
+        queries across the charts and the table. <code>HyparquetStore</code>{" "}
+        and <code>JSStore</code> accept a portable filter AST instead — see the{" "}
+        Planets Comparison demo.
+      </div>
+      <div
+        style={{
           display: "flex",
           gap: 32,
           flexWrap: "wrap",

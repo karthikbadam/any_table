@@ -1,6 +1,6 @@
 import type { RefObject, ReactNode, CSSProperties } from 'react';
 import type { Selection } from '@uwdata/mosaic-core';
-import type { Sort } from '@any_table/core';
+import type { Sort, StoreFilter } from '@any_table/core';
 
 // Re-export shared TableSpec types from the spec package so downstream
 // consumers of @any_table/react still see them on this entry point.
@@ -20,7 +20,7 @@ import type { TableSpec } from '@any_table/spec';
 
 export interface AnyTableProps {
   spec: TableSpec;
-  filter?: Selection;
+  filter?: Selection | StoreFilter | null;
   onSortChange?: (sort: Sort | null) => void;
   containerRef?: RefObject<HTMLElement | null>;
   className?: string;

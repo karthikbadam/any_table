@@ -22,9 +22,12 @@ export {
 } from './controllers/ScrollController';
 export type { ScrollState, RowRange, FetchWindow } from './controllers/ScrollController';
 
-// Mosaic integration
+// Mosaic integration (internal; used by DuckDBStore)
 export { fetchSchema } from './mosaic/SchemaClient';
 export { createCountClient } from './mosaic/CountClient';
 export type { CountClientConfig } from './mosaic/CountClient';
 export { createRowsClient } from './mosaic/RowsClient';
 export type { RowsClientConfig, RowsClient } from './mosaic/RowsClient';
+
+// Store layer — unified abstraction over DuckDB / hyparquet / JS sources.
+export * from './store';

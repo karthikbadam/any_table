@@ -244,5 +244,56 @@ export function diagnoseConfig(spec: unknown, options: DiagnoseOptions = {}): Di
     errors.push({ code: 'rows-not-array', message: 'data.rows must be an array', path: 'data.rows' });
   }
 
+  // 13. data.parquet / data.file / data.store variants
+  if (asSpec.data && 'parquet' in asSpec.data) {
+    const p = (asSpec.data as { parquet: unknown }).parquet as
+      | { url?: string; ref?: string }
+      | undefined;
+    if (!p || (typeof p !== 'object')) {
+      errors.push({
+        code: 'parquet-source-missing',
+        message: 'data.parquet must be { url } or { ref }',
+        path: 'data.parquet',
+      });
+    } else if (!p.url && !p.ref) {
+      errors.push({
+        code: 'parquet-source-missing',
+        message: 'data.parquet requires either a `url` or a registered `ref`',
+        path: 'data.parquet',
+      });
+    }
+  }
+
+  if (asSpec.data && 'file' in asSpec.data) {
+    const f = (asSpec.data as { file: unknown }).file as
+      | { ref?: string; format?: string }
+      | undefined;
+    if (!f || !f.ref) {
+      errors.push({
+        code: 'file-ref-missing',
+        message: 'data.file requires a registered `ref` pointing at a File/Blob',
+        path: 'data.file',
+      });
+    }
+    if (f && f.format && !['json', 'ndjson', 'csv'].includes(f.format)) {
+      errors.push({
+        code: 'file-format-invalid',
+        message: `data.file.format "${f.format}" is invalid — expected "json", "ndjson", or "csv"`,
+        path: 'data.file.format',
+      });
+    }
+  }
+
+  if (asSpec.data && 'store' in asSpec.data) {
+    const s = (asSpec.data as { store: unknown }).store as { ref?: string } | undefined;
+    if (!s || !s.ref) {
+      errors.push({
+        code: 'store-ref-missing',
+        message: 'data.store requires a registered `ref` identifying the TableStore',
+        path: 'data.store',
+      });
+    }
+  }
+
   return { errors, warnings };
 }

@@ -45,6 +45,12 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.2.0
         version: 4.7.0(vite@5.4.21(@types/node@20.19.33))
+      hyparquet:
+        specifier: ^1.25.6
+        version: 1.25.6
+      hyparquet-writer:
+        specifier: ^0.13.0
+        version: 0.13.0
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
@@ -53,6 +59,10 @@ importers:
         version: 5.4.21(@types/node@20.19.33)
 
   packages/core:
+    dependencies:
+      hyparquet:
+        specifier: '>=1.0.0'
+        version: 1.25.6
     devDependencies:
       '@uwdata/mosaic-core':
         specifier: ^0.12.0
@@ -1347,6 +1357,15 @@ packages:
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
+
+  hyparquet-writer@0.13.0:
+    resolution: {integrity: sha512-4Vl2RxwQPjMhCOZ2mCNK/WY3lJiiy+NlUugdsqBPTTy9sw3Uu7sJPU3UMiy7+aRAbY+y2K5dRJuNGTmQ8PdXFQ==}
+
+  hyparquet@1.25.1:
+    resolution: {integrity: sha512-CXcN/u6RdQqsK8IphUptpAEqY8IzgwzHY+MuXX+2wpoWTumfxPVr6JYbbywsNsiAl9aEbM5sRtxkwRBa22b49w==}
+
+  hyparquet@1.25.6:
+    resolution: {integrity: sha512-Q9W5IjkVch3ZMnYd4qFv2q8suu5Jc36yt7J+zUNM9grwnP1S189icp0jdEQKM5HJvQkTVy8NMiQ8n/dM5QAt1A==}
 
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
@@ -3188,6 +3207,14 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
+
+  hyparquet-writer@0.13.0:
+    dependencies:
+      hyparquet: 1.25.1
+
+  hyparquet@1.25.1: {}
+
+  hyparquet@1.25.6: {}
 
   iconv-lite@0.6.3:
     dependencies:

@@ -1,6 +1,13 @@
 import { type RefObject, useMemo } from 'react';
 import type { Selection } from '@uwdata/mosaic-core';
-import type { ColumnDef, Sort, RowHeightConfig, RowRecord } from '@any_table/core';
+import type {
+  ColumnDef,
+  Sort,
+  RowHeightConfig,
+  RowRecord,
+  StoreFilter,
+  TableStore,
+} from '@any_table/core';
 import { useTableData } from './useTableData';
 import { useTableLayout } from './useTableLayout';
 import { useTableScroll } from './useTableScroll';
@@ -15,12 +22,13 @@ import type { SelectionContextValue } from '../context/SelectionContext';
 // ── Option types ─────────────────────────────────────────────────
 
 export interface UseTableOptions {
-  // Data source (required)
+  // Data source (one of table/rows/store required)
   table?: string;
   rows?: RowRecord[];
+  store?: TableStore;
   columns: ColumnDef[];
   rowKey: string;
-  filter?: Selection;
+  filter?: Selection | StoreFilter | null;
   containerRef: RefObject<HTMLElement | null>;
 
   // Display mode
@@ -83,6 +91,7 @@ export function useTable(options: UseTableOptions): UseTableReturn {
   const {
     table,
     rows,
+    store,
     columns,
     rowKey,
     filter,
@@ -101,6 +110,7 @@ export function useTable(options: UseTableOptions): UseTableReturn {
   const data = useTableData({
     table,
     rows,
+    store,
     columns: columnKeys,
     rowKey,
     filter,

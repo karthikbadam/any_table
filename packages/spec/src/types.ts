@@ -47,9 +47,25 @@ export interface ColumnSpec {
   align?: 'left' | 'right' | 'center';
 }
 
+/**
+ * Reference to a resource registered on the enclosing provider — used when
+ * the payload (a `File` / `Blob`) can't be encoded in JSON.
+ */
+export interface DataRef {
+  ref: string;
+}
+
 export type TableDataSource =
-  | { table: string; rows?: never }
-  | { rows: RowRecord[]; table?: never };
+  // Named table resolved via the TableStoreProvider registry (DuckDB, etc.).
+  | { table: string }
+  // Inline rows — handled by an internal JSStore.
+  | { rows: RowRecord[] }
+  // Parquet file via hyparquet — either a URL or a provider-registered file.
+  | { parquet: { url: string } | DataRef }
+  // File-based JS source (parsed in the browser).
+  | { file: DataRef & { format: 'json' | 'ndjson' | 'csv' } }
+  // Arbitrary store registered on the provider under this ref.
+  | { store: DataRef };
 
 export interface ExpansionSpec {
   expandedRowHeight?: number;

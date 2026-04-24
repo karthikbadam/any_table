@@ -13,6 +13,7 @@ export type {
 
 export type { RowRecord } from './mosaic';
 
-export { categorizeType } from './categories';
+export { categorizeType, mapParquetType } from './categories';
+export type { ParquetFieldInfo } from './categories';
 export { getCastDescriptor } from './casting';
 export { parseValue } from './parsing';

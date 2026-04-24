@@ -13,14 +13,50 @@ export type {
   RowRecord,
 } from '@any_table/core';
 
+// Re-export store layer
+export {
+  DuckDBStore,
+  HyparquetStore,
+  JSStore,
+  MemoryEngine,
+  portableFilter,
+  predicateFilter,
+  selectionFilter,
+  compileFilter,
+  filterToMosaicSQL,
+  inferSchema,
+  parseCSV,
+} from '@any_table/core';
+export type {
+  TableStore,
+  StoreFilter,
+  FetchRowsRequest,
+  PortableFilter,
+  RowPredicate,
+  MosaicSelectionLike,
+  DuckDBStoreOptions,
+  DuckDBCoordinator,
+  HyparquetStoreOptions,
+  ParquetSource,
+  JSSource,
+  JSStoreOptions,
+  CSVParseOptions,
+} from '@any_table/core';
+
 // Re-export Mosaic types for consumer convenience (type-only, no runtime dep)
 export type { Coordinator, Selection } from '@uwdata/mosaic-core';
 
-// Provider
+// Providers
+export { TableStoreProvider, type TableStoreProviderProps } from './TableStoreProvider';
 export { MosaicProvider } from './MosaicProvider';
 
 // Contexts
 export { useMosaicCoordinator } from './context/MosaicContext';
+export {
+  useTableStore,
+  useTableStoreRegistry,
+  type TableStoreRegistry,
+} from './context/TableStoreContext';
 export { useDataContext, type TableData } from './context/DataContext';
 export { useLayoutContext, type ColumnLayout } from './context/LayoutContext';
 export { useScrollContext, type TableScroll } from './context/ScrollContext';

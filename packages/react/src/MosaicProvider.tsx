@@ -1,18 +1,21 @@
 import React from 'react';
-import type { Coordinator } from '@uwdata/mosaic-core';
-import { MosaicContext } from './context/MosaicContext';
+import { TableStoreProvider } from './TableStoreProvider';
 
+/**
+ * Legacy provider retained for back-compat. Prefer `<TableStoreProvider />`.
+ * Forwards the coordinator; any `data: { table }` reference is wrapped in a
+ * DuckDBStore on demand.
+ */
 interface MosaicProviderProps {
-  coordinator?: Coordinator | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  coordinator?: any | null;
   children: React.ReactNode;
 }
 
 export function MosaicProvider({ coordinator, children }: MosaicProviderProps) {
-  const resolvedCoordinator = coordinator ?? null;
-
   return (
-    <MosaicContext.Provider value={{ coordinator: resolvedCoordinator }}>
+    <TableStoreProvider coordinator={coordinator ?? undefined}>
       {children}
-    </MosaicContext.Provider>
+    </TableStoreProvider>
   );
 }

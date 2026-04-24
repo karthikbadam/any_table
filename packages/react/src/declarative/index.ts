@@ -35,3 +35,4 @@ export type {
   SelectionSpec,
   SortSpec,
 } from './types';
+export type { DataRef } from '@any_table/spec';

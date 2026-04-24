@@ -1,4 +1,4 @@
-import { MosaicProvider } from "@any_table/react";
+import { TableStoreProvider } from "@any_table/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DemoLoader } from "./components/DemoLoader";
 import { NavPanel } from "./components/NavPanel";
@@ -9,6 +9,8 @@ import { CustomCellsDemo } from "./demos/CustomCellsDemo";
 import { DeclarativeCellsDemo } from "./demos/DeclarativeCellsDemo";
 import { DeclarativeDemo } from "./demos/DeclarativeDemo";
 import { DeclarativeValidationDemo } from "./demos/DeclarativeValidationDemo";
+import { LocalFileDemo } from "./demos/LocalFileDemo";
+import { PlanetsComparisonDemo } from "./demos/PlanetsComparisonDemo";
 import { RubricsDemo } from "./demos/RubricsDemo";
 import { SearchDemo } from "./demos/SearchDemo";
 import { TracesDemo } from "./demos/TracesDemo";
@@ -67,10 +69,14 @@ export default function App() {
                 ? DeclarativeCellsDemo
                 : active.id === "declarative-validation"
                   ? DeclarativeValidationDemo
-                  : RubricsDemo;
+                  : active.id === "planets-comparison"
+                    ? PlanetsComparisonDemo
+                    : active.id === "local-file"
+                      ? LocalFileDemo
+                      : RubricsDemo;
 
   return (
-    <MosaicProvider coordinator={handle?.coordinator ?? null}>
+    <TableStoreProvider coordinator={handle?.coordinator ?? undefined}>
       <DatasetLoadingProvider handle={handle}>
         <div className="mobile-header">
           <button
@@ -106,6 +112,6 @@ export default function App() {
           </main>
         </div>
       </DatasetLoadingProvider>
-    </MosaicProvider>
+    </TableStoreProvider>
   );
 }

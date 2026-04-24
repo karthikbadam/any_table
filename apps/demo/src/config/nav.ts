@@ -61,6 +61,25 @@ export const categories: NavCategory[] = [
     ],
   },
   {
+    label: "Stores",
+    items: [
+      {
+        id: "planets-comparison",
+        title: "Same data, three stores",
+        description:
+          "A 100-row planets dataset rendered side-by-side by the three data stores — DuckDB-WASM, hyparquet, and in-memory JS. Sorting and searching in one panel drives all three, demonstrating 1:1 parity across backends.",
+        enabled: true,
+      },
+      {
+        id: "local-file",
+        title: "Local file",
+        description:
+          "Drop a local .parquet / .json / .csv file onto the page. hyparquet handles Parquet; JSStore parses JSON/CSV. No DuckDB round-trip required.",
+        enabled: true,
+      },
+    ],
+  },
+  {
     label: "Developer Efficiency",
     items: [
       {
@@ -89,7 +108,7 @@ export const categories: NavCategory[] = [
   },
 ];
 
-export const DEFAULT_DEMO_ID = "knowledge-rubrics";
+export const DEFAULT_DEMO_ID = "planets-comparison";
 
 export function findNavItem(id: string): NavItem | undefined {
   for (const cat of categories) {

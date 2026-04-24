@@ -1,34 +1,112 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import type { MosaicClient, Selection, Coordinator } from "@uwdata/mosaic-core";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  JSStore,
   SparseDataModel,
-  fetchSchema,
-  createCountClient,
-  createRowsClient,
+  subscribeMosaicSelection,
   type ColumnSchema,
+  type MosaicSelectionLike,
+  type RowRecord,
   type Sort,
   type SortField,
-  type RowRecord,
-  type RowsClient,
+  type StoreFilter,
+  type TableStore,
 } from "@any_table/core";
-import { useMosaicCoordinator } from "../context/MosaicContext";
+import {
+  useTableStoreRegistry,
+} from "../context/TableStoreContext";
 import type { TableData } from "../context/DataContext";
 
 export interface UseTableDataOptions {
+  /** Registered store name OR a throwaway key for `rows`/`store`. */
   table?: string;
+  /** Inline row data. If provided, routed through an internal JSStore. */
   rows?: RowRecord[];
+  /** Explicit store instance; wins over `table` + `rows`. */
+  store?: TableStore;
+  /** Columns to project (order doesn't matter; schema drives rendering). */
   columns: string[];
   rowKey: string;
-  filter?: Selection;
+  /**
+   * Filter. Accepts:
+   *   - `StoreFilter` (preferred, portable across all stores)
+   *   - Mosaic `Selection` (auto-wrapped for DuckDBStore)
+   *   - null / undefined → no filter
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  filter?: StoreFilter | MosaicSelectionLike | any | null;
+}
+
+function isMosaicSelection(value: unknown): value is MosaicSelectionLike {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    typeof (value as MosaicSelectionLike).addEventListener === 'function'
+  );
+}
+
+function isStoreFilter(value: unknown): value is StoreFilter {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    'kind' in (value as object) &&
+    ['portable', 'predicate', 'mosaic-selection'].includes(
+      (value as { kind: string }).kind,
+    )
+  );
+}
+
+function normalizeFilter(
+  filter: UseTableDataOptions['filter'],
+): StoreFilter | null {
+  if (filter == null) return null;
+  if (isStoreFilter(filter)) return filter;
+  if (isMosaicSelection(filter)) {
+    return { kind: 'mosaic-selection', selection: filter };
+  }
+  return null;
 }
 
 export function useTableData(options: UseTableDataOptions): TableData {
-  const { table, rows: arrayRows, filter } = options;
-  const coordinator = useMosaicCoordinator();
+  const { table, rows, store: storeProp, filter } = options;
+  const registry = useTableStoreRegistry();
 
-  // Stabilize columns array — only recompute when the actual column names change
   const columnsKey = options.columns.join(",");
   const columns = useMemo(() => options.columns, [columnsKey]);
+
+  // Stabilize a JSStore for inline rows. The row array identity drives
+  // invalidation — callers pass a new array on meaningful updates.
+  const rowsRef = useRef(rows);
+  const jsStoreRef = useRef<JSStore | null>(null);
+  if (rows && rows !== rowsRef.current) {
+    rowsRef.current = rows;
+    jsStoreRef.current = new JSStore({
+      tableName: table ?? 'inline',
+      source: { kind: 'rows', rows },
+    });
+  } else if (rows && !jsStoreRef.current) {
+    jsStoreRef.current = new JSStore({
+      tableName: table ?? 'inline',
+      source: { kind: 'rows', rows },
+    });
+  } else if (!rows && jsStoreRef.current) {
+    jsStoreRef.current = null;
+  }
+
+  // Resolve the active store per render.
+  const store: TableStore | null = useMemo(() => {
+    if (storeProp) return storeProp;
+    if (rows) return jsStoreRef.current;
+    if (!table) return null;
+    if (registry) {
+      const hit = registry.byTableName[table];
+      if (hit) return hit;
+      const resolved = registry.resolve?.(table);
+      if (resolved && !(resolved as Promise<TableStore>).then) return resolved as TableStore;
+      // Promise-valued factories aren't supported synchronously; callers
+      // that need async factories should pre-register instead.
+    }
+    return null;
+  }, [storeProp, rows, table, registry]);
 
   const [version, setVersion] = useState(0);
   const [schema, setSchema] = useState<ColumnSchema[]>([]);
@@ -36,199 +114,171 @@ export function useTableData(options: UseTableDataOptions): TableData {
   const [sort, setSortState] = useState<Sort | null>(null);
 
   const modelRef = useRef(new SparseDataModel());
-  const rowsClientRef = useRef<RowsClient | null>(null);
-  const countClientRef = useRef<MosaicClient | null>(null);
-  const connectedRef = useRef(false);
 
-  // ── Array mode ──
-  const isArrayMode = arrayRows != null;
+  // Track the latest requested window so sort changes can refetch it.
+  const windowRef = useRef({ offset: 0, limit: 100 });
+  const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    if (!isArrayMode) return;
+  const normalizedFilter = useMemo(() => normalizeFilter(filter), [filter]);
+  const schemaRef = useRef<ColumnSchema[]>([]);
+  schemaRef.current = schema;
 
-    const inferredSchema: ColumnSchema[] = columns.map((name) => ({
-      name,
-      sqlType: "VARCHAR",
-      typeCategory: "text" as const,
-    }));
-    setSchema(inferredSchema);
+  const projectedSchema = useMemo(() => {
+    if (columns.length === 0) return schema;
+    return schema.filter((s) => columns.includes(s.name));
+  }, [schema, columns]);
 
-    const model = modelRef.current;
-    model.clear();
-    model.setTotalRows(arrayRows!.length);
-    model.mergeRows(0, arrayRows!);
-    setIsLoading(false);
-    setVersion((v) => v + 1);
-  }, [isArrayMode, arrayRows, columns]);
+  // Refs so subscription callbacks always see the latest callbacks.
+  const fetchWindowRef = useRef<(offset: number, limit: number) => void>(() => {});
 
-  // ── Mosaic mode ──
-  useEffect(() => {
-    if (isArrayMode || !table || !coordinator) return;
+  const fetchWindow = useCallback(
+    async (offset: number, limit: number) => {
+      if (!store) return;
+      const currentSchema = schemaRef.current;
+      const cols = currentSchema.length > 0 && columns.length > 0
+        ? currentSchema.filter((s) => columns.includes(s.name))
+        : currentSchema;
+      const sortFields: SortField[] | null = sort == null
+        ? null
+        : Array.isArray(sort) ? sort : [sort];
 
-    let cancelled = false;
-    connectedRef.current = false;
-    setIsLoading(true);
-
-    async function init() {
+      const id = ++requestIdRef.current;
       try {
-        const [mosaicCore, mosaicSql] = await Promise.all([
-          import("@uwdata/mosaic-core"),
-          import("@uwdata/mosaic-sql"),
-        ]);
-
-        if (cancelled) return;
-
-        const { MosaicClient, queryFieldInfo } = mosaicCore;
-        const { Query, column, cast, desc, count } = mosaicSql;
-
-        const schemaResult = await fetchSchema(
-          coordinator!,
-          table!,
-          queryFieldInfo,
-        );
-
-        if (cancelled) return;
-
-        const filteredSchema =
-          columns.length > 0
-            ? schemaResult.filter((s) => columns.includes(s.name))
-            : schemaResult;
-
-        setSchema(filteredSchema);
-
-        const model = modelRef.current;
-        model.clear();
-
-        const countClient = createCountClient(
-          MosaicClient,
-          Query,
-          count,
-          {
-            tableName: table!,
-            onResult: (totalCount: number) => {
-              model.setTotalRows(totalCount);
-              setVersion((v) => v + 1);
-            },
-          },
-          filter,
-        );
-        countClientRef.current = countClient;
-
-        const rowsClient = createRowsClient(
-          MosaicClient,
-          { Query, column, cast, desc },
-          {
-            tableName: table!,
-            columns: filteredSchema,
-            onResult: (rows: RowRecord[], offset: number) => {
-              model.mergeRows(offset, rows);
-              setIsLoading(false);
-              setVersion((v) => v + 1);
-            },
-          },
-          filter,
-        );
-        rowsClientRef.current = rowsClient;
-
-        await coordinator!.connect(countClient);
-        await coordinator!.connect(rowsClient);
-
-        if (!cancelled) {
-          connectedRef.current = true;
-        }
+        const rowsOut = await store.fetchRows({
+          columns: cols,
+          offset,
+          limit,
+          sort: sortFields,
+          filter: normalizedFilter,
+        });
+        if (id !== requestIdRef.current) return;
+        modelRef.current.mergeRows(offset, rowsOut);
+        setIsLoading(false);
+        setVersion((v) => v + 1);
       } catch (err) {
-        if (!cancelled) {
-          console.error("[any_table] Failed to initialize data:", err);
+        if (id === requestIdRef.current) {
+          console.error('[any_table] fetchRows failed:', err);
           setIsLoading(false);
         }
       }
-    }
+    },
+    [store, columns, sort, normalizedFilter],
+  );
+  fetchWindowRef.current = fetchWindow;
 
-    init();
+  // Initial schema + count + first window whenever the store or filter changes.
+  useEffect(() => {
+    if (!store) return;
+    let cancelled = false;
+    setIsLoading(true);
+    modelRef.current.clear();
+
+    (async () => {
+      try {
+        const fullSchema = await store.getSchema();
+        if (cancelled) return;
+        const filtered =
+          columns.length > 0
+            ? fullSchema.filter((s) => columns.includes(s.name))
+            : fullSchema;
+        setSchema(filtered);
+
+        const [count, initialRows] = await Promise.all([
+          store.getRowCount(normalizedFilter),
+          store.fetchRows({
+            columns: filtered,
+            offset: windowRef.current.offset,
+            limit: windowRef.current.limit,
+            sort: sort == null ? null : Array.isArray(sort) ? sort : [sort],
+            filter: normalizedFilter,
+          }),
+        ]);
+        if (cancelled) return;
+
+        modelRef.current.setTotalRows(count);
+        modelRef.current.mergeRows(windowRef.current.offset, initialRows);
+        setIsLoading(false);
+        setVersion((v) => v + 1);
+      } catch (err) {
+        if (!cancelled) {
+          console.error('[any_table] useTableData init failed:', err);
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    // Subscribe to Mosaic Selection changes so cross-filter keeps working.
+    const cleanup: Array<() => void> = [];
+    if (normalizedFilter?.kind === 'mosaic-selection') {
+      cleanup.push(
+        subscribeMosaicSelection(normalizedFilter.selection, () => {
+          (async () => {
+            try {
+              const count = await store.getRowCount(normalizedFilter);
+              modelRef.current.setTotalRows(count);
+              modelRef.current.clear();
+              fetchWindowRef.current(windowRef.current.offset, windowRef.current.limit);
+              setVersion((v) => v + 1);
+            } catch (err) {
+              console.error('[any_table] selection refresh failed:', err);
+            }
+          })();
+        }),
+      );
+    }
+    if (store.subscribe) {
+      cleanup.push(
+        store.subscribe(() => {
+          modelRef.current.clear();
+          fetchWindowRef.current(windowRef.current.offset, windowRef.current.limit);
+        }),
+      );
+    }
 
     return () => {
       cancelled = true;
-      connectedRef.current = false;
-      if (rowsClientRef.current && coordinator) {
-        coordinator.disconnect(rowsClientRef.current);
-      }
-      if (countClientRef.current && coordinator) {
-        coordinator.disconnect(countClientRef.current);
-      }
+      for (const fn of cleanup) fn();
     };
-  }, [isArrayMode, table, coordinator, filter, columns]);
+    // fetchWindow intentionally omitted — it depends on sort/filter/store which are already tracked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, normalizedFilter, columnsKey]);
 
-  // ── Sort handling ──
   const setSort = useCallback(
     (newSort: Sort | null) => {
       setSortState(newSort);
-
-      if (isArrayMode) {
-        if (!arrayRows) return;
-        const model = modelRef.current;
-        model.clear();
-
-        let sorted = [...arrayRows];
-        if (newSort) {
-          const fields: SortField[] = Array.isArray(newSort)
-            ? newSort
-            : [newSort];
-          sorted.sort((a, b) => {
-            for (const field of fields) {
-              const aVal = a[field.column];
-              const bVal = b[field.column];
-              if (aVal != null && bVal != null && aVal < bVal)
-                return field.desc ? 1 : -1;
-              if (aVal != null && bVal != null && aVal > bVal)
-                return field.desc ? -1 : 1;
-            }
-            return 0;
-          });
-        }
-
-        model.setTotalRows(sorted.length);
-        model.mergeRows(0, sorted);
-        setVersion((v) => v + 1);
-      } else {
-        const client = rowsClientRef.current;
-        if (client && connectedRef.current) {
-          client.sort = newSort;
-          client.fetchWindow(0, 15);
-          setIsLoading(true);
-          modelRef.current.clear();
-          setVersion((v) => v + 1);
-          client.requestUpdate();
-        }
-      }
+      if (!store) return;
+      modelRef.current.clear();
+      setIsLoading(true);
+      // Fetch page 0; the scroll controller will request the real window once
+      // it's restored from the DOM. Using 0 keeps initial rows visible.
+      fetchWindow(0, Math.max(windowRef.current.limit, 15));
     },
-    [isArrayMode, arrayRows],
+    [store, fetchWindow],
   );
 
-  const setWindow = useCallback((offset: number, limit: number) => {
-    const client = rowsClientRef.current;
-    if (client && connectedRef.current) {
-      client.fetchWindow(offset, limit);
-      client.requestUpdate();
-    }
-  }, []);
+  const setWindow = useCallback(
+    (offset: number, limit: number) => {
+      windowRef.current = { offset, limit };
+      fetchWindow(offset, limit);
+    },
+    [fetchWindow],
+  );
 
-  // Stable getRow/hasRow that read from the ref — identity doesn't change
   const model = modelRef.current;
   const getRow = useCallback((index: number) => model.getRow(index), [model]);
   const hasRow = useCallback((index: number) => model.hasRow(index), [model]);
 
-  // Stabilize the returned data object — only changes when data actually changes
   return useMemo<TableData>(
     () => ({
       getRow,
       hasRow,
       totalRows: model.totalRows,
-      schema,
+      schema: projectedSchema,
       isLoading,
       setWindow,
       sort,
       setSort,
     }),
-    [getRow, hasRow, version, schema, isLoading, setWindow, sort, setSort],
+    [getRow, hasRow, version, projectedSchema, isLoading, setWindow, sort, setSort],
   );
 }

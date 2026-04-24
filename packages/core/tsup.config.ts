@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ['@uwdata/mosaic-core', '@uwdata/mosaic-sql'],
+  external: ['@uwdata/mosaic-core', '@uwdata/mosaic-sql', 'hyparquet'],
 });

@@ -1,7 +1,10 @@
 # @any_table/react — LLM Quick Reference
 
-AnyTable is a headless, virtualized React table backed by DuckDB-WASM + Mosaic.
-This page describes the **declarative API**: the JSON surface an LLM should emit.
+AnyTable is a headless, virtualized React table that reads from one of three
+pluggable in-browser **stores**: `DuckDBStore` (SQL via DuckDB-WASM + Mosaic),
+`HyparquetStore` (pure-JS Parquet reader), or `JSStore` (plain rows or a local
+File of JSON / NDJSON / CSV). This page describes the **declarative API**: the
+JSON surface an LLM should emit.
 
 ## One-line install
 
@@ -9,8 +12,9 @@ This page describes the **declarative API**: the JSON surface an LLM should emit
 pnpm add @any_table/react
 ```
 
-Peer deps: `react@>=18`, `react-dom@>=18`. Mosaic peers (`@uwdata/mosaic-core`,
-`@uwdata/mosaic-sql`) are optional and only needed when using `data.table`.
+Peer deps: `react@>=18`, `react-dom@>=18`. `@uwdata/mosaic-core`,
+`@uwdata/mosaic-sql`, and `hyparquet` are optional — install only the ones for
+stores you use.
 
 ## Minimal usage
 
@@ -37,7 +41,7 @@ Every TableSpec uses the same top-level keys — learn them once:
 
 | key        | type                                        | notes                                       |
 | ---------- | ------------------------------------------- | ------------------------------------------- |
-| data       | `{ table: string } \| { rows: object[] }`   | Pick one. `table` requires MosaicProvider.  |
+| data       | `TableDataSource` (see below)               | Pick one. See "Data sources".               |
 | rowKey     | string                                      | Must be a column key or a field on rows.    |
 | columns    | ColumnSpec[]                                | See below.                                  |
 | expansion  | boolean \| `{ expandedRowHeight?: number }` | Expandable cells on row click.              |
@@ -92,11 +96,52 @@ registerCell("sparkline", ({ value }) => <Spark data={value as number[]} />);
 
 ## Data sources
 
-- **Client-side**: `data: { rows: [...] }` — pass an array of plain objects. Good
-  for small datasets and demos; no DuckDB needed.
-- **DuckDB/Mosaic**: `data: { table: "open_rubrics" }` — wrap your app in
-  `<MosaicProvider coordinator={...}>`. `useTable` / `<AnyTable>` will query and
-  virtualize millions of rows.
+Pick one variant for `spec.data`:
+
+- `{ rows: [...] }` — inline rows. Routed through an internal `JSStore`. No provider needed.
+- `{ table: "orders" }` — look up a store registered on `<TableStoreProvider>` (typically `DuckDBStore`; can be any `TableStore`).
+- `{ parquet: { url: "/data.parquet" } }` — stream a Parquet file via `HyparquetStore`. Peer dep: `hyparquet`.
+- `{ parquet: { ref: "my_file" } }` — Parquet from a `File`/`Blob`/`ArrayBuffer` registered on `<TableStoreProvider resources={{ my_file: fileObj }}>`.
+- `{ file: { ref: "upload", format: "json" | "ndjson" | "csv" } }` — JS-side parse of a registered File/Blob.
+- `{ store: { ref: "custom" } }` — any custom `TableStore` registered on the provider's `resources`.
+
+### Provider
+
+Mount one `<TableStoreProvider>` at the root. Common shapes:
+
+```tsx
+// DuckDB (unchanged from before)
+<TableStoreProvider coordinator={coordinator}>{children}</TableStoreProvider>
+
+// Explicit stores
+<TableStoreProvider stores={[new JSStore({ tableName: "orders", source: { kind: "rows", rows } })]}>
+
+// Files referenced from a spec
+<TableStoreProvider resources={{ upload: file }}>
+```
+
+`MosaicProvider` is still exported as a thin compat wrapper over `TableStoreProvider`; new code should prefer `TableStoreProvider`.
+
+## Filters: `PortableFilter`
+
+All three stores accept a portable filter AST via `useTable({ filter })` or
+`<AnyTable filter={...}>`:
+
+```ts
+import { portableFilter, type PortableFilter } from "@any_table/react";
+
+const q: PortableFilter = {
+  op: "or",
+  clauses: [
+    { op: "contains", column: "name", value: "ada", caseInsensitive: true },
+    { op: "ge",       column: "score", value: 80 },
+  ],
+};
+
+<AnyTable spec={spec} filter={portableFilter(q)} />
+```
+
+`DuckDBStore` compiles the AST into Mosaic-sql and pushes it down. `HyparquetStore` and `JSStore` evaluate it in memory. Mosaic `Selection` objects still work with `DuckDBStore` (cross-filter); the others reject them with a clear error.
 
 ## Validation
 

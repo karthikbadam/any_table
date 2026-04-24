@@ -5,6 +5,7 @@ export type {
   ColumnCell,
   BuiltinCellName,
   TableDataSource,
+  DataRef,
   ExpansionSpec,
   SelectionSpec,
   SortSpec,

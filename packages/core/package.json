@@ -23,11 +23,14 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "peerDependencies": {
     "@uwdata/mosaic-core": ">=0.10.0",
-    "@uwdata/mosaic-sql": ">=0.10.0"
+    "@uwdata/mosaic-sql": ">=0.10.0",
+    "hyparquet": ">=1.0.0"
   },
   "peerDependenciesMeta": {
     "@uwdata/mosaic-core": {
@@ -35,12 +38,16 @@
     },
     "@uwdata/mosaic-sql": {
       "optional": true
+    },
+    "hyparquet": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@uwdata/mosaic-core": "^0.12.0",
     "@uwdata/mosaic-sql": "^0.12.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.8"
   }
 }

@@ -31,10 +31,17 @@ a table", or "build a data grid with AnyTable". For full reference, read
 
 ## When the user provides data
 
-- If they hand you an array of objects, use `data: { rows: [...] }` and skip
-  MosaicProvider.
-- If they name a DuckDB table, use `data: { table: "<name>" }` and remind them
-  that `<MosaicProvider>` must wrap the app.
+Choose the `spec.data` variant that matches the source and pick the store
+accordingly — AnyTable handles the glue.
+
+- **Array of plain objects** → `data: { rows: [...] }`. Goes through `JSStore`; no provider required.
+- **DuckDB/Mosaic table name** → `data: { table: "<name>" }`. Wrap the app in `<TableStoreProvider coordinator={...}>`.
+- **Parquet URL** → `data: { parquet: { url: "https://..." } }`. Uses `HyparquetStore`. No DuckDB needed; tell them to `pnpm add hyparquet`.
+- **Local file** (drag-drop, `<input type="file">`) → register it on the provider as a resource and reference it:
+  `<TableStoreProvider resources={{ myFile: file }}>` then `data: { parquet: { ref: "myFile" } }` or
+  `data: { file: { ref: "myFile", format: "csv" } }`.
+
+For filters across any store, build a `PortableFilter` and wrap it with `portableFilter(...)`. Avoid `Selection` unless the table must participate in Mosaic cross-filter — `Selection` only works with `DuckDBStore`.
 
 ## When the user asks for a custom cell
 

@@ -1,8 +1,39 @@
 # @any_table/core
 
-Framework-agnostic core for AnyTable — type system, layout algorithms, scroll math, sparse data model, and Mosaic client factories.
+Framework-agnostic core for AnyTable — type system, layout algorithms, scroll math, sparse data model, the `TableStore` abstraction, and the three bundled stores (`DuckDBStore`, `HyparquetStore`, `JSStore`).
 
 > This package provides the internals used by `@any_table/react`. Most users should use `@any_table/react` directly.
+
+## Stores
+
+The store layer decouples data access from rendering. All stores implement the `TableStore` interface (`getSchema`, `getRowCount`, `fetchRows`) and are lazy about their optional peer dependencies.
+
+```ts
+import {
+  DuckDBStore,    // needs @uwdata/mosaic-core, @uwdata/mosaic-sql
+  HyparquetStore, // needs hyparquet
+  JSStore,        // no extra deps
+  portableFilter,
+} from "@any_table/core";
+```
+
+- `DuckDBStore({ coordinator, tableName })` — SQL over a Mosaic coordinator. Accepts `PortableFilter` or Mosaic `Selection`.
+- `HyparquetStore({ tableName, source: { kind: "url", url } | { kind: "file", file } | { kind: "buffer", buffer } })` — streams row windows from a Parquet file; falls back to an in-memory engine when a filter or sort is set.
+- `JSStore({ tableName, source: { kind: "rows", rows } | { kind: "file", file, format: "json" | "ndjson" | "csv" } })` — plain rows or a local File/Blob.
+
+Filter any store with a `PortableFilter`:
+
+```ts
+const f = portableFilter({
+  op: "and",
+  clauses: [
+    { op: "contains", column: "name", value: "ada", caseInsensitive: true },
+    { op: "ge", column: "score", value: 80 },
+  ],
+});
+
+await store.fetchRows({ columns, offset: 0, limit: 50, sort: null, filter: f });
+```
 
 ## Install
 

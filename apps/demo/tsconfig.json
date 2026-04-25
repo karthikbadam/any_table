@@ -2,11 +2,16 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@any_table/core": ["../../packages/core/src/index.ts"],
+      "@any_table/spec": ["../../packages/spec/src/index.ts"],
+      "@any_table/react": ["../../packages/react/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

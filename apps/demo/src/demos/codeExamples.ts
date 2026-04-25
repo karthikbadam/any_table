@@ -637,6 +637,7 @@ function Panel({ store, filter, sort, onSortChange }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const table = useTable({
     store, columns, rowKey: "name", filter, containerRef, onSortChange,
+    rowHeightConfig: { numLines: 1, padding: "6px" },
   });
   return (
     <div ref={containerRef} style={{ height: 420, position: "relative" }}>
@@ -711,6 +712,7 @@ function FileTable({ store }: { store: TableStore }) {
   const [columns, setColumns] = useState<ColumnDef[]>([]);
   const table = useTable({
     store, columns, rowKey: columns[0]?.key ?? "_", containerRef,
+    rowHeightConfig: { numLines: 1, padding: "4px" },
   });
 
   // Seed the column layout from the inferred schema, once.

@@ -16,7 +16,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "patchedDependencies": {
+      "apache-arrow@17.0.0": "patches/apache-arrow@17.0.0.patch"
+    }
   },
   "devDependencies": {
     "gh-pages": "^6.3.0"

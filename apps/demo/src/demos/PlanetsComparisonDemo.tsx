@@ -82,6 +82,7 @@ function StorePanel({
     filter,
     containerRef,
     onSortChange,
+    rowHeightConfig: { numLines: 1, padding: "6px" },
   });
 
   // Mirror external sort changes into this panel (one-way, guarded against

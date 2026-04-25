@@ -16,7 +16,7 @@ export function resolveWidth(
 }
 
 const DEFAULT_LINE_HEIGHT = '1.25rem';
-const DEFAULT_NUM_LINES = 1;
+const DEFAULT_NUM_LINES = 3;
 const DEFAULT_PADDING = '0.5rem';
 
 export function resolveRowHeight(

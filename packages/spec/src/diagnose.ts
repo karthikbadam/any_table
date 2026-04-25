@@ -197,7 +197,7 @@ export function diagnoseConfig(spec: unknown, options: DiagnoseOptions = {}): Di
     typeof asSpec.expansion === 'object' &&
     asSpec.expansion.expandedRowHeight !== undefined
   ) {
-    const lines = asSpec.rowHeight?.numLines ?? 1;
+    const lines = asSpec.rowHeight?.numLines ?? 3;
     const lineHeightPx = 20;
     if (asSpec.expansion.expandedRowHeight < lines * lineHeightPx) {
       warnings.push({

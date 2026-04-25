@@ -56,6 +56,7 @@ function FileTable({ store }: FileTableProps) {
     columns: columns.length > 0 ? columns : [],
     rowKey: columns[0]?.key ?? "_",
     containerRef,
+    rowHeightConfig: { numLines: 1, padding: "4px" },
   });
 
   // Once the schema arrives, derive a one-column-per-field layout.

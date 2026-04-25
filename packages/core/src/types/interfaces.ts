@@ -62,7 +62,7 @@ export interface ResolvedColumn {
 
 export interface RowHeightConfig {
   lineHeight?: string;  // default: '1.25rem'
-  numLines?: number;    // default: 1
+  numLines?: number;    // default: 3
   padding?: string;     // default: '0.5rem'
 }
 

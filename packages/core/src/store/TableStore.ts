@@ -3,7 +3,7 @@ import type { RowRecord } from '../types/mosaic';
 
 /**
  * A filter handed to a TableStore. The `kind` tag lets stores accept only the
- * forms they understand (e.g. DuckDBStore takes both 'portable' and
+ * forms they understand (e.g. MosaicDuckDBStore takes both 'portable' and
  * 'mosaic-selection'; JSStore/HyparquetStore take only 'portable').
  */
 export type StoreFilter =
@@ -31,8 +31,8 @@ export interface FetchRowsRequest {
 
 /**
  * A data source for a single logical table, driven by `useTableData`.
- * Implementations: DuckDBStore (SQL/Mosaic), HyparquetStore (Parquet reader),
- * JSStore (in-memory rows or File).
+ * Implementations: MosaicDuckDBStore (SQL/Mosaic), HyparquetStore (Parquet
+ * reader), JSStore (in-memory rows or File).
  */
 export interface TableStore {
   readonly id: string;

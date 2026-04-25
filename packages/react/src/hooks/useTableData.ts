@@ -29,7 +29,7 @@ export interface UseTableDataOptions {
   /**
    * Filter. Accepts:
    *   - `StoreFilter` (preferred, portable across all stores)
-   *   - Mosaic `Selection` (auto-wrapped for DuckDBStore)
+   *   - Mosaic `Selection` (auto-wrapped for MosaicDuckDBStore)
    *   - null / undefined → no filter
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

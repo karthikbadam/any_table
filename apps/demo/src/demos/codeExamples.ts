@@ -601,7 +601,7 @@ export function CrossFilterDemo() {
 }`,
 
   "planets-comparison": `import {
-  DuckDBStore,
+  MosaicDuckDBStore,
   HyparquetStore,
   JSStore,
   Table,
@@ -652,7 +652,7 @@ export function PlanetsComparisonDemo({ duckCoordinator }) {
 
   // Each store is built once and reused across renders.
   const duck = useMemo(
-    () => new DuckDBStore({ coordinator: duckCoordinator, tableName: "planets" }),
+    () => new MosaicDuckDBStore({ coordinator: duckCoordinator, tableName: "planets" }),
     [duckCoordinator],
   );
   const hy = useMemo(

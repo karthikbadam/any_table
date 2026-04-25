@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { DuckDBStore, type TableStore } from '@any_table/core';
+import { MosaicDuckDBStore, type TableStore } from '@any_table/core';
 import {
   TableStoreContext,
   type TableStoreRegistry,
 } from './context/TableStoreContext';
 import { MosaicContext } from './context/MosaicContext';
 
-export interface TableStoreProviderProps {
+export interface AnyTableProviderProps {
   /**
    * Stores keyed by logical tableName. The same store instance may be listed
    * under multiple names if one DuckDB connection hosts several tables.
@@ -21,8 +21,8 @@ export interface TableStoreProviderProps {
 
   /**
    * Optional Mosaic Coordinator. Any table that isn't in `stores` is wrapped
-   * in a DuckDBStore on demand. Also exposed via `useMosaicCoordinator` for
-   * escape-hatch SQL (see CrossFilterDemo).
+   * in a MosaicDuckDBStore on demand. Also exposed via `useMosaicCoordinator`
+   * for escape-hatch SQL (see CrossFilterDemo).
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   coordinator?: any;
@@ -42,13 +42,13 @@ export interface TableStoreProviderProps {
  * explicit map of stores, a DuckDB Mosaic coordinator, a custom factory, or
  * any combination. At least one must be supplied for `data: { table }` sources.
  */
-export function TableStoreProvider({
+export function AnyTableProvider({
   stores,
   resolve,
   coordinator,
   resources,
   children,
-}: TableStoreProviderProps) {
+}: AnyTableProviderProps) {
   const registry: TableStoreRegistry = useMemo(() => {
     const byTableName: Record<string, TableStore> = {};
     if (Array.isArray(stores)) {
@@ -57,7 +57,7 @@ export function TableStoreProvider({
       Object.assign(byTableName, stores);
     }
 
-    const coordinatorStores = new Map<string, DuckDBStore>();
+    const coordinatorStores = new Map<string, MosaicDuckDBStore>();
     const resolver = (name: string): TableStore | Promise<TableStore> | null => {
       if (resolve) {
         const custom = resolve(name);
@@ -66,7 +66,7 @@ export function TableStoreProvider({
       if (coordinator) {
         const existing = coordinatorStores.get(name);
         if (existing) return existing;
-        const s = new DuckDBStore({ coordinator, tableName: name });
+        const s = new MosaicDuckDBStore({ coordinator, tableName: name });
         coordinatorStores.set(name, s);
         return s;
       }
@@ -76,8 +76,9 @@ export function TableStoreProvider({
     return { byTableName, resolve: resolver, resources };
   }, [stores, resolve, coordinator, resources]);
 
-  // Expose Mosaic coordinator via legacy context too, so existing code that
-  // uses `useMosaicCoordinator()` (e.g. CrossFilterDemo) keeps working.
+  // Expose Mosaic coordinator via a separate context so code that needs
+  // direct coordinator access (e.g. CrossFilterDemo) can read it via
+  // `useMosaicCoordinator()`.
   const mosaicValue = useMemo(
     () => ({ coordinator: coordinator ?? null }),
     [coordinator],

@@ -22,7 +22,7 @@ export {
 } from './controllers/ScrollController';
 export type { ScrollState, RowRange, FetchWindow } from './controllers/ScrollController';
 
-// Mosaic integration (internal; used by DuckDBStore)
+// Mosaic integration (internal; used by MosaicDuckDBStore)
 export { fetchSchema } from './mosaic/SchemaClient';
 export { createCountClient } from './mosaic/CountClient';
 export type { CountClientConfig } from './mosaic/CountClient';

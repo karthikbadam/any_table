@@ -101,7 +101,7 @@ function resolvePredicate(filter: StoreFilter | null): RowPredicate | null {
   if (filter.kind === 'mosaic-selection') {
     throw new Error(
       '[any_table] Mosaic Selection filters are not supported by in-memory stores. ' +
-        'Use a PortableFilter or the DuckDBStore.',
+        'Use a PortableFilter or the MosaicDuckDBStore.',
     );
   }
   return null;

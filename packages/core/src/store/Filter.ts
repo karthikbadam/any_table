@@ -133,40 +133,30 @@ export function compileFilter(filter: PortableFilter): RowPredicate {
 
 // ── SQL compilation: PortableFilter → Mosaic-sql ExprNode ───────────
 
-/** Subset of the Mosaic-sql API surface needed to compile PortableFilter → SQL. */
-export interface MosaicSqlApi {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sql: (strings: TemplateStringsArray, ...values: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  literal: (value: unknown) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  and: (...exprs: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  or: (...exprs: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  not: (expr: any) => any;
-}
-
 function sqlEscapeLike(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
 /**
  * Compile a PortableFilter AST into a Mosaic-sql expression node that can be
- * passed to `Query.where(...)`. The API is parametric so we don't import
- * `@uwdata/mosaic-sql` statically from @any_table/core.
+ * passed to `Query.where(...)`. Accepts the `@uwdata/mosaic-sql` module
+ * directly; callers pass the result of `await import('@uwdata/mosaic-sql')`
+ * so `@any_table/core` stays free of a static Mosaic import.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function filterToMosaicSQL(filter: PortableFilter, api: MosaicSqlApi): any {
-  const { sql, literal, and, or, not } = api;
+export function filterToMosaicSQL(
+  filter: PortableFilter,
+  mosaicSql: typeof import('@uwdata/mosaic-sql'),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  const { sql, literal, and, or, not } = mosaicSql;
 
   switch (filter.op) {
     case 'and':
-      return and(...filter.clauses.map((c) => filterToMosaicSQL(c, api)));
+      return and(...filter.clauses.map((c) => filterToMosaicSQL(c, mosaicSql)));
     case 'or':
-      return or(...filter.clauses.map((c) => filterToMosaicSQL(c, api)));
+      return or(...filter.clauses.map((c) => filterToMosaicSQL(c, mosaicSql)));
     case 'not':
-      return not(filterToMosaicSQL(filter.clause, api));
+      return not(filterToMosaicSQL(filter.clause, mosaicSql));
     case 'eq':
       return sql`"${filter.column}" = ${literal(filter.value)}`;
     case 'ne':

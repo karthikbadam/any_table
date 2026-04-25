@@ -1,7 +1,7 @@
 # @any_table/react — LLM Quick Reference
 
 AnyTable is a headless, virtualized React table that reads from one of three
-pluggable in-browser **stores**: `DuckDBStore` (SQL via DuckDB-WASM + Mosaic),
+pluggable in-browser **stores**: `MosaicDuckDBStore` (SQL via DuckDB-WASM + Mosaic),
 `HyparquetStore` (pure-JS Parquet reader), or `JSStore` (plain rows or a local
 File of JSON / NDJSON / CSV). This page describes the **declarative API**: the
 JSON surface an LLM should emit.
@@ -99,28 +99,26 @@ registerCell("sparkline", ({ value }) => <Spark data={value as number[]} />);
 Pick one variant for `spec.data`:
 
 - `{ rows: [...] }` — inline rows. Routed through an internal `JSStore`. No provider needed.
-- `{ table: "orders" }` — look up a store registered on `<TableStoreProvider>` (typically `DuckDBStore`; can be any `TableStore`).
+- `{ table: "orders" }` — look up a store registered on `<AnyTableProvider>` (typically `MosaicDuckDBStore`; can be any `TableStore`).
 - `{ parquet: { url: "/data.parquet" } }` — stream a Parquet file via `HyparquetStore`. Peer dep: `hyparquet`.
-- `{ parquet: { ref: "my_file" } }` — Parquet from a `File`/`Blob`/`ArrayBuffer` registered on `<TableStoreProvider resources={{ my_file: fileObj }}>`.
+- `{ parquet: { ref: "my_file" } }` — Parquet from a `File`/`Blob`/`ArrayBuffer` registered on `<AnyTableProvider resources={{ my_file: fileObj }}>`.
 - `{ file: { ref: "upload", format: "json" | "ndjson" | "csv" } }` — JS-side parse of a registered File/Blob.
 - `{ store: { ref: "custom" } }` — any custom `TableStore` registered on the provider's `resources`.
 
 ### Provider
 
-Mount one `<TableStoreProvider>` at the root. Common shapes:
+Mount one `<AnyTableProvider>` at the root. Common shapes:
 
 ```tsx
-// DuckDB (unchanged from before)
-<TableStoreProvider coordinator={coordinator}>{children}</TableStoreProvider>
+// DuckDB via Mosaic coordinator
+<AnyTableProvider coordinator={coordinator}>{children}</AnyTableProvider>
 
 // Explicit stores
-<TableStoreProvider stores={[new JSStore({ tableName: "orders", source: { kind: "rows", rows } })]}>
+<AnyTableProvider stores={[new JSStore({ tableName: "orders", source: { kind: "rows", rows } })]}>
 
 // Files referenced from a spec
-<TableStoreProvider resources={{ upload: file }}>
+<AnyTableProvider resources={{ upload: file }}>
 ```
-
-`MosaicProvider` is still exported as a thin compat wrapper over `TableStoreProvider`; new code should prefer `TableStoreProvider`.
 
 ## Filters: `PortableFilter`
 
@@ -141,7 +139,11 @@ const q: PortableFilter = {
 <AnyTable spec={spec} filter={portableFilter(q)} />
 ```
 
-`DuckDBStore` compiles the AST into Mosaic-sql and pushes it down. `HyparquetStore` and `JSStore` evaluate it in memory. Mosaic `Selection` objects still work with `DuckDBStore` (cross-filter); the others reject them with a clear error.
+`MosaicDuckDBStore` compiles the AST into Mosaic-sql and pushes it down. `HyparquetStore` and `JSStore` evaluate it in memory.
+
+### Mosaic `Selection` works only with `MosaicDuckDBStore`
+
+Mosaic `Selection` objects (cross-filter brushes, etc.) require `MosaicDuckDBStore` because they resolve into a Mosaic-sql predicate at query time. `HyparquetStore` and `JSStore` reject `selectionFilter(...)` with a clear error — for those stores, build an equivalent `PortableFilter` (e.g. `{ op: "ge", column: "x", value: lo }`) and pass it via `portableFilter(...)`. If you need cross-store brushing, mirror the brush state into a `PortableFilter` yourself.
 
 ## Validation
 

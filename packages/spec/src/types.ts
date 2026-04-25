@@ -56,7 +56,7 @@ export interface DataRef {
 }
 
 export type TableDataSource =
-  // Named table resolved via the TableStoreProvider registry (DuckDB, etc.).
+  // Named table resolved via the AnyTableProvider registry (DuckDB, etc.).
   | { table: string }
   // Inline rows — handled by an internal JSStore.
   | { rows: RowRecord[] }

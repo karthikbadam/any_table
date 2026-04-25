@@ -1,6 +1,6 @@
 # @any_table/core
 
-Framework-agnostic core for AnyTable — type system, layout algorithms, scroll math, sparse data model, the `TableStore` abstraction, and the three bundled stores (`DuckDBStore`, `HyparquetStore`, `JSStore`).
+Framework-agnostic core for AnyTable — type system, layout algorithms, scroll math, sparse data model, the `TableStore` abstraction, and the three bundled stores (`MosaicDuckDBStore`, `HyparquetStore`, `JSStore`).
 
 > This package provides the internals used by `@any_table/react`. Most users should use `@any_table/react` directly.
 
@@ -10,14 +10,14 @@ The store layer decouples data access from rendering. All stores implement the `
 
 ```ts
 import {
-  DuckDBStore,    // needs @uwdata/mosaic-core, @uwdata/mosaic-sql
+  MosaicDuckDBStore,    // needs @uwdata/mosaic-core, @uwdata/mosaic-sql
   HyparquetStore, // needs hyparquet
   JSStore,        // no extra deps
   portableFilter,
 } from "@any_table/core";
 ```
 
-- `DuckDBStore({ coordinator, tableName })` — SQL over a Mosaic coordinator. Accepts `PortableFilter` or Mosaic `Selection`.
+- `MosaicDuckDBStore({ coordinator, tableName })` — SQL over a Mosaic coordinator. Accepts `PortableFilter` or Mosaic `Selection`.
 - `HyparquetStore({ tableName, source: { kind: "url", url } | { kind: "file", file } | { kind: "buffer", buffer } })` — streams row windows from a Parquet file; falls back to an in-memory engine when a filter or sort is set.
 - `JSStore({ tableName, source: { kind: "rows", rows } | { kind: "file", file, format: "json" | "ndjson" | "csv" } })` — plain rows or a local File/Blob.
 

@@ -1,13 +1,13 @@
 # @any_table/react
 
-React hooks and compound components for building virtualized tables. Renders large datasets at 60fps on top of one of three pluggable in-browser stores: `DuckDBStore` (SQL via DuckDB-WASM + Mosaic), `HyparquetStore` (pure-JS Parquet), or `JSStore` (plain rows or a local File).
+React hooks and compound components for building virtualized tables. Renders large datasets at 60fps on top of one of three pluggable in-browser stores: `MosaicDuckDBStore` (SQL via DuckDB-WASM + Mosaic), `HyparquetStore` (pure-JS Parquet), or `JSStore` (plain rows or a local File).
 
 ## Install
 
 ```bash
 npm install @any_table/react @any_table/core
 # plus optional peers for the store(s) you use:
-npm install @uwdata/mosaic-core @uwdata/mosaic-sql  # for DuckDBStore
+npm install @uwdata/mosaic-core @uwdata/mosaic-sql  # for MosaicDuckDBStore
 npm install hyparquet                               # for HyparquetStore
 ```
 
@@ -15,13 +15,13 @@ npm install hyparquet                               # for HyparquetStore
 
 ```tsx
 import { useRef } from "react";
-import { TableStoreProvider, useTable, Table } from "@any_table/react";
+import { AnyTableProvider, useTable, Table } from "@any_table/react";
 
 function App() {
   return (
-    <TableStoreProvider coordinator={coordinator}>
+    <AnyTableProvider coordinator={coordinator}>
       <OrdersTable />
-    </TableStoreProvider>
+    </AnyTableProvider>
   );
 }
 
@@ -104,16 +104,16 @@ The `Table.Root` / `Table.Header` / `Table.Viewport` markup stays the same.
 ## Usage with a Parquet URL (hyparquet)
 
 ```tsx
-import { HyparquetStore, TableStoreProvider, useTable, Table } from "@any_table/react";
+import { HyparquetStore, AnyTableProvider, useTable, Table } from "@any_table/react";
 
 const planetsStore = new HyparquetStore({
   tableName: "planets",
   source: { kind: "url", url: "/planets.parquet" },
 });
 
-<TableStoreProvider stores={[planetsStore]}>
+<AnyTableProvider stores={[planetsStore]}>
   <App />
-</TableStoreProvider>
+</AnyTableProvider>
 ```
 
 In `App`, use `useTable({ table: "planets", … })` exactly as before.
@@ -135,8 +135,7 @@ function onFile(file: File) {
 
 ## Providers
 
-- `<TableStoreProvider coordinator={coordinator} stores={[…]} resources={{ … }}>` — primary provider. Accepts any combination of a Mosaic coordinator (auto-wraps unresolved table names in `DuckDBStore`), explicit stores, and named resources (File/Blob) referenced from `TableSpec.data` variants.
-- `<MosaicProvider coordinator={…}>` — thin compat alias that forwards to `<TableStoreProvider>`.
+- `<AnyTableProvider coordinator={coordinator} stores={[…]} resources={{ … }}>` — the provider. Accepts any combination of a Mosaic coordinator (auto-wraps unresolved table names in `MosaicDuckDBStore`), explicit stores, and named resources (File/Blob) referenced from `TableSpec.data` variants.
 
 ## Filters across stores
 
@@ -158,7 +157,7 @@ const search: PortableFilter = {
 <AnyTable spec={spec} filter={portableFilter(search)} />
 ```
 
-Mosaic `Selection` objects still work with `DuckDBStore` — the other two stores throw a helpful error that points you at `PortableFilter`.
+Mosaic `Selection` objects still work with `MosaicDuckDBStore` — the other two stores throw a helpful error that points you at `PortableFilter`.
 
 ## License
 

@@ -6,7 +6,7 @@ A headless, virtualized React table for large datasets.
 
 AnyTable reads from one of three in-browser **stores**. Pick based on how your data arrives:
 
-| Feature | `DuckDBStore` | `HyparquetStore` | `JSStore` |
+| Feature | `MosaicDuckDBStore` | `HyparquetStore` | `JSStore` |
 |---|---|---|---|
 | Sources | Parquet, CSV, JSON, any registered table | Parquet (URL / File / ArrayBuffer) | `RowRecord[]`, File (JSON / NDJSON / CSV) |
 | Filter pushdown | Yes (SQL) | No (in-memory) | No (in-memory) |
@@ -19,7 +19,7 @@ The "Same data, three stores" demo renders a single dataset through all three st
 
 ## Guiding Principles
 
-**Pluggable data sources.** The `TableStore` interface abstracts over DuckDB-WASM, hyparquet, and plain JS rows/files. Choose per table; mix freely. Mosaic (via `DuckDBStore`) remains a first-class partner for visualization.
+**Pluggable data sources.** The `TableStore` interface abstracts over DuckDB-WASM, hyparquet, and plain JS rows/files. Choose per table; mix freely. Mosaic (via `MosaicDuckDBStore`) remains a first-class partner for visualization.
 
 **React-idiomatic surface with performant internals.** You write normal React. Under the hood, scroll and positioning bypass React's render cycle for 60fps. These optimizations are invisible.
 
@@ -84,7 +84,7 @@ pnpm dev
 ## Quick Start
 
 ```tsx
-import { useTable, Table, TableStoreProvider } from "@any_table/react";
+import { useTable, Table, AnyTableProvider } from "@any_table/react";
 
 function MyTable() {
   const containerRef = useRef<HTMLDivElement>(null);

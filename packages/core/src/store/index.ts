@@ -13,7 +13,6 @@ export {
 } from './TableStore';
 
 export { compileFilter, filterToMosaicSQL } from './Filter';
-export type { MosaicSqlApi } from './Filter';
 
 export { MemoryEngine } from './memory/MemoryEngine';
 export { makeRowComparator } from './memory/comparators';
@@ -25,12 +24,11 @@ export type { CSVParseOptions } from './js/csv';
 export { JSStore } from './js/JSStore';
 export type { JSSource, JSStoreOptions } from './js/JSStore';
 
-export { DuckDBStore, subscribeMosaicSelection } from './duckdb/DuckDBStore';
+export { MosaicDuckDBStore, subscribeMosaicSelection } from './duckdb/MosaicDuckDBStore';
 export type {
-  DuckDBStoreOptions,
-  DuckDBCoordinator,
-  DuckDBStoreSqlApi,
-} from './duckdb/DuckDBStore';
+  MosaicDuckDBStoreOptions,
+  MosaicCoordinator,
+} from './duckdb/MosaicDuckDBStore';
 
 export { HyparquetStore } from './hyparquet/HyparquetStore';
 export type {

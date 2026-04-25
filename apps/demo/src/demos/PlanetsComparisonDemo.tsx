@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { useDatasetLoading } from "../context/DatasetLoadingContext";
 import {
-  duckdbStore,
+  mosaicDuckdbStore,
   ensurePlanetsDuckDB,
   hyparquetStore,
   jsUrlStore,
@@ -303,7 +303,7 @@ export function PlanetsComparisonDemo() {
     let cancelled = false;
     ensurePlanetsDuckDB(handle, parquetUrl)
       .then(() => {
-        if (!cancelled) setDuckStore(duckdbStore(handle, "planets"));
+        if (!cancelled) setDuckStore(mosaicDuckdbStore(handle, "planets"));
       })
       .catch((err) => {
         if (!cancelled) setDuckError(String(err));

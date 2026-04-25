@@ -15,7 +15,7 @@ export type {
 
 // Re-export store layer
 export {
-  DuckDBStore,
+  MosaicDuckDBStore,
   HyparquetStore,
   JSStore,
   MemoryEngine,
@@ -34,8 +34,8 @@ export type {
   PortableFilter,
   RowPredicate,
   MosaicSelectionLike,
-  DuckDBStoreOptions,
-  DuckDBCoordinator,
+  MosaicDuckDBStoreOptions,
+  MosaicCoordinator,
   HyparquetStoreOptions,
   ParquetSource,
   JSSource,
@@ -44,11 +44,10 @@ export type {
 } from '@any_table/core';
 
 // Re-export Mosaic types for consumer convenience (type-only, no runtime dep)
-export type { Coordinator, Selection } from '@uwdata/mosaic-core';
+export type { Coordinator, Selection, MosaicClient } from '@uwdata/mosaic-core';
 
-// Providers
-export { TableStoreProvider, type TableStoreProviderProps } from './TableStoreProvider';
-export { MosaicProvider } from './MosaicProvider';
+// Provider
+export { AnyTableProvider, type AnyTableProviderProps } from './AnyTableProvider';
 
 // Contexts
 export { useMosaicCoordinator } from './context/MosaicContext';

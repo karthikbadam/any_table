@@ -1,4 +1,4 @@
-import { TableStoreProvider } from "@any_table/react";
+import { AnyTableProvider } from "@any_table/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DemoLoader } from "./components/DemoLoader";
 import { NavPanel } from "./components/NavPanel";
@@ -76,7 +76,7 @@ export default function App() {
                       : RubricsDemo;
 
   return (
-    <TableStoreProvider coordinator={handle?.coordinator ?? undefined}>
+    <AnyTableProvider coordinator={handle?.coordinator ?? undefined}>
       <DatasetLoadingProvider handle={handle}>
         <div className="mobile-header">
           <button
@@ -112,6 +112,6 @@ export default function App() {
           </main>
         </div>
       </DatasetLoadingProvider>
-    </TableStoreProvider>
+    </AnyTableProvider>
   );
 }

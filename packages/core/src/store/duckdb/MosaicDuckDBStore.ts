@@ -9,76 +9,48 @@ import type {
   StoreFilter,
   TableStore,
 } from '../TableStore';
-import { filterToMosaicSQL, type MosaicSqlApi } from '../Filter';
+import { filterToMosaicSQL } from '../Filter';
 
 /**
- * Minimal Mosaic Coordinator shape used by DuckDBStore. Typed structurally
- * so @any_table/core does not import from @uwdata/mosaic-core directly.
+ * Structural shape of a Mosaic Coordinator. Declared here so consumers can
+ * type their coordinator parameter without installing `@uwdata/mosaic-core`
+ * (it is an optional peer dependency). The runtime objects produced by
+ * Mosaic's coordinator factory satisfy this shape.
  */
-export interface DuckDBCoordinator {
+export interface MosaicCoordinator {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query(query: any): Promise<any>;
 }
 
-/** Lazy-imported handles for Mosaic-core / Mosaic-sql symbols. */
-export interface DuckDBStoreSqlApi extends MosaicSqlApi {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Query: { from(table: string): any };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  column(name: string): any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  cast(expr: any, type: string): any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  desc(expr: any): any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  count(): any;
-  queryFieldInfo(
-    coord: DuckDBCoordinator,
-    fields: Array<{ table: string; column: string }>,
-  ): Promise<Array<{ column: string; sqlType: string }>>;
-}
-
-export interface DuckDBStoreOptions {
-  coordinator: DuckDBCoordinator;
+export interface MosaicDuckDBStoreOptions {
+  coordinator: MosaicCoordinator;
   tableName: string;
-  /** Optional pre-resolved Mosaic API. If omitted, it is lazy-imported. */
-  sqlApi?: DuckDBStoreSqlApi;
 }
 
-let sqlApiPromise: Promise<DuckDBStoreSqlApi> | null = null;
-async function loadSqlApi(): Promise<DuckDBStoreSqlApi> {
-  if (!sqlApiPromise) {
-    sqlApiPromise = (async () => {
-      const [core, sqlMod] = await Promise.all([
+/** Lazy-imported Mosaic modules. Resolved once and reused. */
+let mosaicPromise:
+  | Promise<{
+      core: typeof import('@uwdata/mosaic-core');
+      sql: typeof import('@uwdata/mosaic-sql');
+    }>
+  | null = null;
+function loadMosaic() {
+  if (!mosaicPromise) {
+    mosaicPromise = (async () => {
+      const [core, sql] = await Promise.all([
         import('@uwdata/mosaic-core'),
         import('@uwdata/mosaic-sql'),
       ]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const m = sqlMod as any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const c = core as any;
-      return {
-        Query: m.Query,
-        column: m.column,
-        cast: m.cast,
-        desc: m.desc,
-        count: m.count,
-        sql: m.sql,
-        literal: m.literal,
-        and: m.and,
-        or: m.or,
-        not: m.not,
-        queryFieldInfo: c.queryFieldInfo,
-      } satisfies DuckDBStoreSqlApi;
+      return { core, sql };
     })();
   }
-  return sqlApiPromise;
+  return mosaicPromise;
 }
 
 /**
  * TableStore backed by a DuckDB-WASM database via a Mosaic Coordinator.
  *
- * Builds SQL with @uwdata/mosaic-sql's Query AST and executes through
+ * Builds SQL with `@uwdata/mosaic-sql`'s Query AST and executes through
  * `coordinator.query()`. Accepts three StoreFilter kinds:
  *   - `portable`   → compiled to a Mosaic-sql WHERE expression.
  *   - `mosaic-selection` → resolved via `selection.predicate(undefined)` and
@@ -86,28 +58,26 @@ async function loadSqlApi(): Promise<DuckDBStoreSqlApi> {
  *   - `predicate`  → rejected with a clear error (push into DuckDB as SQL or
  *     switch to an in-memory store).
  */
-export class DuckDBStore implements TableStore {
-  readonly id = 'duckdb';
+export class MosaicDuckDBStore implements TableStore {
+  readonly id = 'mosaic-duckdb';
   readonly tableName: string;
 
-  private readonly coordinator: DuckDBCoordinator;
-  private readonly sqlApiProvided: DuckDBStoreSqlApi | undefined;
+  private readonly coordinator: MosaicCoordinator;
   private cachedSchema: ColumnSchema[] | null = null;
 
-  constructor(opts: DuckDBStoreOptions) {
+  constructor(opts: MosaicDuckDBStoreOptions) {
     this.coordinator = opts.coordinator;
     this.tableName = opts.tableName;
-    this.sqlApiProvided = opts.sqlApi;
-  }
-
-  private async api(): Promise<DuckDBStoreSqlApi> {
-    return this.sqlApiProvided ?? (await loadSqlApi());
   }
 
   async getSchema(): Promise<ColumnSchema[]> {
     if (this.cachedSchema) return this.cachedSchema;
-    const api = await this.api();
-    const info = await api.queryFieldInfo(this.coordinator, [
+    const { core } = await loadMosaic();
+    // Cast through `any`: the public `MosaicCoordinator` type is structurally
+    // minimal so consumers don't need `@uwdata/mosaic-core` types installed.
+    // At runtime, the value is always a real Mosaic Coordinator.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const info = await core.queryFieldInfo(this.coordinator as any, [
       { table: this.tableName, column: '*' },
     ]);
     this.cachedSchema = info.map((f) => ({
@@ -119,9 +89,9 @@ export class DuckDBStore implements TableStore {
   }
 
   async getRowCount(filter: StoreFilter | null): Promise<number> {
-    const api = await this.api();
-    const where = resolveFilterExpr(filter, api);
-    let q = api.Query.from(this.tableName).select({ count: api.count() });
+    const { sql } = await loadMosaic();
+    const where = resolveFilterExpr(filter, sql);
+    let q = sql.Query.from(this.tableName).select({ count: sql.count() });
     if (where != null) q = q.where(where);
     const data = await this.coordinator.query(q);
     const arr = data.toArray();
@@ -130,25 +100,25 @@ export class DuckDBStore implements TableStore {
   }
 
   async fetchRows(req: FetchRowsRequest): Promise<RowRecord[]> {
-    const api = await this.api();
+    const { sql } = await loadMosaic();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const select: Record<string, any> = {};
     for (const col of req.columns) {
       const desc = getCastDescriptor(col);
       select[col.name] = desc.castTo
-        ? api.cast(api.column(col.name), desc.castTo)
-        : api.column(col.name);
+        ? sql.cast(sql.column(col.name), desc.castTo)
+        : sql.column(col.name);
     }
 
-    let q = api.Query.from(this.tableName).select(select);
-    const where = resolveFilterExpr(req.filter, api);
+    let q = sql.Query.from(this.tableName).select(select);
+    const where = resolveFilterExpr(req.filter, sql);
     if (where != null) q = q.where(where);
 
     if (req.sort && req.sort.length > 0) {
       q = q.orderby(
         ...req.sort.map((sf) =>
-          sf.desc ? api.desc(api.column(sf.column)) : api.column(sf.column),
+          sf.desc ? sql.desc(sql.column(sf.column)) : sql.column(sf.column),
         ),
       );
     }
@@ -172,17 +142,17 @@ export class DuckDBStore implements TableStore {
 
 function resolveFilterExpr(
   filter: StoreFilter | null,
-  api: DuckDBStoreSqlApi,
+  sql: typeof import('@uwdata/mosaic-sql'),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any | null {
   if (!filter) return null;
-  if (filter.kind === 'portable') return filterToMosaicSQL(filter.filter, api);
+  if (filter.kind === 'portable') return filterToMosaicSQL(filter.filter, sql);
   if (filter.kind === 'mosaic-selection') {
     return resolveSelectionPredicate(filter.selection);
   }
   if (filter.kind === 'predicate') {
     throw new Error(
-      '[DuckDBStore] predicate filters are not supported. ' +
+      '[MosaicDuckDBStore] predicate filters are not supported. ' +
         'Use a PortableFilter, a Mosaic Selection, or switch to JSStore/HyparquetStore.',
     );
   }

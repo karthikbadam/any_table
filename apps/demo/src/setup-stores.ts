@@ -1,16 +1,19 @@
 import {
-  DuckDBStore,
   HyparquetStore,
   JSStore,
+  MosaicDuckDBStore,
   type RowRecord,
 } from "@any_table/react";
 import type { DuckDBHandle } from "./setup-mosaic";
 
 /**
- * Build a DuckDBStore for a table that's already loaded into the coordinator.
+ * Build a MosaicDuckDBStore for a table that's already loaded into the coordinator.
  */
-export function duckdbStore(handle: DuckDBHandle, tableName: string): DuckDBStore {
-  return new DuckDBStore({ coordinator: handle.coordinator, tableName });
+export function mosaicDuckdbStore(
+  handle: DuckDBHandle,
+  tableName: string,
+): MosaicDuckDBStore {
+  return new MosaicDuckDBStore({ coordinator: handle.coordinator, tableName });
 }
 
 /**

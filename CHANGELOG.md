@@ -1,15 +1,27 @@
 # Changelog
 
-## Unreleased — Multi-store migration
+## Unreleased — Mosaic-honest naming
+
+### Changed
+
+- **`DuckDBStore` → `MosaicDuckDBStore`** (`@any_table/core`, re-exported from `@any_table/react`). The store is built on `@uwdata/mosaic-core` and `@uwdata/mosaic-sql`; the new name makes the dependency explicit. Constructor options renamed to `MosaicDuckDBStoreOptions`; the structural coordinator type is now `MosaicCoordinator`.
+- **`<TableStoreProvider>` → `<AnyTableProvider>`** (`@any_table/react`). Behavior unchanged: still accepts `stores`, `resolve`, `coordinator`, and `resources`. The internal coordinator-auto-wrap now constructs a `MosaicDuckDBStore`.
+- The internal `DuckDBStoreSqlApi` wrapper interface in `MosaicDuckDBStore` and the parametric `MosaicSqlApi` in `Filter.ts` are gone; `filterToMosaicSQL` now accepts the `@uwdata/mosaic-sql` module directly. Mosaic stays an *optional* peer dependency — `@any_table/core` lazy-imports it inside `MosaicDuckDBStore`, so consumers using only `HyparquetStore` / `JSStore` don't pay for it.
+
+### Removed
+
+- `<MosaicProvider>` — the thin compat alias over `TableStoreProvider`. Use `<AnyTableProvider>`.
+
+## Earlier — Multi-store migration
 
 ### Added
 
 - **`TableStore` abstraction** (`@any_table/core`). One interface (`getSchema`, `getRowCount`, `fetchRows`) with three concrete implementations:
-  - `DuckDBStore` — SQL via a Mosaic coordinator. Accepts both `PortableFilter` and Mosaic `Selection`.
+  - `MosaicDuckDBStore` — SQL via a Mosaic coordinator. Accepts both `PortableFilter` and Mosaic `Selection`.
   - `HyparquetStore` — pure-JS Parquet reader over URL / `File` / `ArrayBuffer`. Streamed row-window reads; in-memory engine for filter+sort.
   - `JSStore` — plain `RowRecord[]` or a `File`/`Blob` of JSON / NDJSON / CSV. Absorbs the previous array-mode path.
 - **`PortableFilter` AST** portable across all stores, with compilers to both a `RowPredicate` (for in-memory stores) and a Mosaic-sql expression (for DuckDB).
-- **`<TableStoreProvider>`** (`@any_table/react`) — primary React provider. Accepts an explicit store registry, a Mosaic coordinator (auto-wraps table names in `DuckDBStore`), and named `resources` (File/Blob) referenced from `TableSpec.data` variants.
+- **`<AnyTableProvider>`** (`@any_table/react`) — primary React provider. Accepts an explicit store registry, a Mosaic coordinator (auto-wraps table names in `MosaicDuckDBStore`), and named `resources` (File/Blob) referenced from `TableSpec.data` variants.
 - **`useTableStore` / `useTableStoreRegistry`** hooks.
 - **`MemoryEngine`** — filter + sort + window over an in-memory row array, used by `JSStore` and (on demand) by `HyparquetStore`.
 - **New `TableSpec.data` variants**: `{ parquet: { url } | { ref } }`, `{ file: { ref, format } }`, `{ store: { ref } }`. Validated by `diagnoseConfig`.
@@ -20,9 +32,8 @@
 ### Changed
 
 - `useTableData` collapsed to a single store-driven code path. `{ rows: RowRecord[] }` is now routed through an internal `JSStore`.
-- `MosaicProvider` is now a thin wrapper over `TableStoreProvider` and remains exported for back-compat.
 - `useTable({ filter })` accepts `StoreFilter | Selection | null`. `SearchDemo` still uses Mosaic `Selection` (DuckDB-backed); `PlanetsComparisonDemo` uses `PortableFilter` to drive all three stores from one search box.
-- `CrossFilterDemo` gained a banner noting it is `DuckDBStore`-only.
+- `CrossFilterDemo` gained a banner noting it is `MosaicDuckDBStore`-only.
 - `@any_table/core` now declares `hyparquet` as an optional peer dependency alongside the Mosaic peers.
 
 ### Docs

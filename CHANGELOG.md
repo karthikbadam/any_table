@@ -13,7 +13,7 @@
 - **`useTableStore` / `useTableStoreRegistry`** hooks.
 - **`MemoryEngine`** — filter + sort + window over an in-memory row array, used by `JSStore` and (on demand) by `HyparquetStore`.
 - **New `TableSpec.data` variants**: `{ parquet: { url } | { ref } }`, `{ file: { ref, format } }`, `{ store: { ref } }`. Validated by `diagnoseConfig`.
-- **Demo: "Same data, three stores"** — a 100-row, 10-column planets dataset rendered side-by-side by all three stores. Shared sort/search across all panels. Fixture at `apps/demo/public/planets.{parquet,json}`.
+- **Demo: "Same data, three stores"** — a 10,000-row, 10-column planets dataset rendered side-by-side by all three stores. Shared sort/search across all panels. Fixture at `apps/demo/public/planets.{parquet,json}` (~330 KB Parquet, ~3.3 MB JSON).
 - **Demo: "Local file"** — `<input type="file">` drop zone; parquet/json/ndjson/csv all work client-side.
 - **Core test suite** (16 tests) covering `MemoryEngine`, `compileFilter`, CSV parser, and schema inference.
 

@@ -48,7 +48,7 @@ describe('HyparquetStore + planets.parquet fixture', () => {
       source: { kind: 'buffer', buffer: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer },
     });
     const schema = await store.getSchema();
-    expect(await store.getRowCount(null)).toBe(100);
+    expect(await store.getRowCount(null)).toBe(10000);
 
     const rows = await store.fetchRows({
       columns: schema,

@@ -67,7 +67,7 @@ export const categories: NavCategory[] = [
         id: "planets-comparison",
         title: "Same data, three stores",
         description:
-          "A 100-row planets dataset rendered side-by-side by the three data stores — DuckDB-WASM, hyparquet, and in-memory JS. Sorting and searching in one panel drives all three, demonstrating 1:1 parity across backends.",
+          "A 10,000-row planets dataset rendered side-by-side by the three data stores — DuckDB-WASM, hyparquet, and in-memory JS. Sorting and searching in one panel drives all three, demonstrating 1:1 parity across backends.",
         enabled: true,
       },
       {

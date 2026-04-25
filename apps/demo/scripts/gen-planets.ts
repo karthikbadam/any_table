@@ -219,7 +219,7 @@ function makeSynthetic(i: number): Planet {
 const all: Planet[] = [];
 all.push(...solarSystem);
 for (const p of namedExo) all.push(makeExo(p));
-while (all.length < 100) all.push(makeSynthetic(all.length));
+while (all.length < 10000) all.push(makeSynthetic(all.length));
 
 writeFileSync(
   resolve(OUT_DIR, 'planets.json'),

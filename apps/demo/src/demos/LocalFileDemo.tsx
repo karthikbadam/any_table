@@ -56,7 +56,6 @@ function FileTable({ store }: FileTableProps) {
     columns: columns.length > 0 ? columns : [],
     rowKey: columns[0]?.key ?? "_",
     containerRef,
-    rowHeightConfig: { numLines: 1, padding: "4px" },
   });
 
   // Once the schema arrives, derive a one-column-per-field layout.
@@ -77,7 +76,7 @@ function FileTable({ store }: FileTableProps) {
       ref={containerRef}
       style={{
         width: "100%",
-        height: 480,
+        height: "60vh",
         position: "relative",
         border: "1px solid var(--border)",
         borderRadius: 6,
@@ -103,9 +102,10 @@ function FileTable({ store }: FileTableProps) {
         <Table.Root {...table.rootProps}>
           <Table.Header
             style={{
-              padding: 6,
+              height: "2.25rem",
               background: "var(--surface)",
               borderBottom: "1px solid var(--border)",
+              flex: "0 0 auto",
             }}
           >
             {({ columns: cols }) =>
@@ -119,10 +119,24 @@ function FileTable({ store }: FileTableProps) {
                     textTransform: "uppercase",
                     letterSpacing: "0.04em",
                     color: "var(--muted-fg)",
+                    padding: "0 10px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
                   <Table.SortTrigger column={col.key}>
-                    {col.key.replace(/_/g, " ")}
+                    <span
+                      style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        display: "block",
+                      }}
+                      title={col.key.replace(/_/g, " ")}
+                    >
+                      {col.key.replace(/_/g, " ")}
+                    </span>
                   </Table.SortTrigger>
                 </Table.HeaderCell>
               ))
@@ -234,7 +248,7 @@ export function LocalFileDemo() {
         <div
           style={{
             width: "100%",
-            height: 480,
+            height: "60vh",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

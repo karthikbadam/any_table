@@ -19,7 +19,7 @@ import { codeExamples } from "./codeExamples";
 
 // ── Layout ─────────────────────────────────────────────────────────
 
-const PANEL_HEIGHT = 420;
+const PANEL_HEIGHT = "55vh";
 
 const columns: ColumnDef[] = [
   { key: "name", width: "9rem" },
@@ -33,8 +33,6 @@ const columns: ColumnDef[] = [
   { key: "is_habitable_zone", width: "5rem" },
   { key: "notes", flex: 1, minWidth: "14rem" },
 ];
-
-const ROW_HEIGHT = { numLines: 1, padding: "6px" } as const;
 
 // ── Search box → PortableFilter ────────────────────────────────────
 
@@ -84,7 +82,7 @@ function StorePanel({
     filter,
     containerRef,
     onSortChange,
-    rowHeightConfig: ROW_HEIGHT,
+    rowHeightConfig: { numLines: 2 },
   });
 
   // Mirror external sort changes into this panel (one-way, guarded against
@@ -161,9 +159,10 @@ function StorePanel({
           <Table.Root {...table.rootProps}>
             <Table.Header
               style={{
-                padding: "4px 0",
+                height: "2.25rem",
                 background: "var(--surface)",
                 borderBottom: "1px solid var(--border)",
+                flex: "0 0 auto",
               }}
             >
               {({ columns: cols }) =>
@@ -178,10 +177,23 @@ function StorePanel({
                       letterSpacing: "0.04em",
                       color: "var(--muted-fg)",
                       padding: "0 8px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
                     <Table.SortTrigger column={col.key}>
-                      {col.key.replace(/_/g, " ")}
+                      <span
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          display: "block",
+                        }}
+                        title={col.key.replace(/_/g, " ")}
+                      >
+                        {col.key.replace(/_/g, " ")}
+                      </span>
                     </Table.SortTrigger>
                   </Table.HeaderCell>
                 ))

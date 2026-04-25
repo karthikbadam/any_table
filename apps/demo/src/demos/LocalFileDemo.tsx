@@ -1,8 +1,8 @@
 import type { ColumnDef, TableStore } from "@any_table/react";
 import { HyparquetStore, JSStore, Table, useTable } from "@any_table/react";
-import { useRef, useState } from "react";
-
-// ── Demo ───────────────────────────────────────────────────────────
+import { useEffect, useRef, useState } from "react";
+import { CodeBlock } from "../components/CodeBlock";
+import { codeExamples } from "./codeExamples";
 
 type Format = "parquet" | "json" | "ndjson" | "csv";
 
@@ -26,10 +26,7 @@ function buildStore(file: File): { store: TableStore; format: Format } | { error
   if (fmt === "parquet") {
     return {
       format: fmt,
-      store: new HyparquetStore({
-        tableName,
-        source: { kind: "file", file },
-      }),
+      store: new HyparquetStore({ tableName, source: { kind: "file", file } }),
     };
   }
   return {
@@ -41,37 +38,145 @@ function buildStore(file: File): { store: TableStore; format: Format } | { error
   };
 }
 
-export function LocalFileDemo() {
+interface FileTableProps {
+  store: TableStore;
+}
+
+/**
+ * Render a table for a single store. Lives in its own component so that
+ * `useTable` is only mounted after we have a store and columns are seeded
+ * from the discovered schema.
+ */
+function FileTable({ store }: FileTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [store, setStore] = useState<TableStore | null>(null);
-  const [format, setFormat] = useState<Format | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [columns, setColumns] = useState<ColumnDef[]>([]);
 
   const table = useTable({
-    store: store ?? undefined,
-    columns: columns.length > 0 ? columns : [{ key: "_", width: "6rem" }],
-    rowKey: "_",
+    store,
+    columns: columns.length > 0 ? columns : [],
+    rowKey: columns[0]?.key ?? "_",
     containerRef,
+    rowHeightConfig: { numLines: 1, padding: "4px" },
   });
 
-  // Infer columns from schema on first load so we don't need the caller to list them.
-  if (store && columns.length === 0 && table.data.schema.length > 0) {
+  // Once the schema arrives, derive a one-column-per-field layout.
+  useEffect(() => {
+    if (columns.length > 0) return;
+    if (table.data.schema.length === 0) return;
     setColumns(
       table.data.schema.map<ColumnDef>((s) => ({
         key: s.name,
         flex: 1,
-        minWidth: "6rem",
+        minWidth: "8rem",
       })),
     );
-  }
+  }, [columns.length, table.data.schema]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: "100%",
+        height: 480,
+        position: "relative",
+        border: "1px solid var(--border)",
+        borderRadius: 6,
+        background: "var(--surface)",
+        overflow: "hidden",
+      }}
+    >
+      {columns.length === 0 ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--muted-fg)",
+            fontSize: "0.85rem",
+          }}
+        >
+          Reading {store.tableName}…
+        </div>
+      ) : (
+        <Table.Root {...table.rootProps}>
+          <Table.Header
+            style={{
+              padding: 6,
+              background: "var(--surface)",
+              borderBottom: "1px solid var(--border)",
+            }}
+          >
+            {({ columns: cols }) =>
+              cols.map((col) => (
+                <Table.HeaderCell
+                  key={col.key}
+                  column={col.key}
+                  style={{
+                    fontWeight: 600,
+                    fontSize: "0.7rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    color: "var(--muted-fg)",
+                  }}
+                >
+                  <Table.SortTrigger column={col.key}>
+                    {col.key.replace(/_/g, " ")}
+                  </Table.SortTrigger>
+                </Table.HeaderCell>
+              ))
+            }
+          </Table.Header>
+          <Table.Viewport>
+            {({ rows }) =>
+              rows.map((row) => (
+                <Table.Row
+                  key={row.key}
+                  row={row}
+                  style={{ borderBottom: "1px solid var(--border)" }}
+                >
+                  {({ cells }) =>
+                    cells.map((cell) => (
+                      <Table.Cell
+                        key={cell.column}
+                        column={cell.column}
+                        width={cell.width}
+                        offset={cell.offset}
+                        style={{
+                          padding: "4px 10px",
+                          fontSize: "0.78rem",
+                          color: "var(--fg)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {cell.value == null ? "" : String(cell.value)}
+                      </Table.Cell>
+                    ))
+                  }
+                </Table.Row>
+              ))
+            }
+          </Table.Viewport>
+        </Table.Root>
+      )}
+    </div>
+  );
+}
+
+export function LocalFileDemo() {
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [store, setStore] = useState<TableStore | null>(null);
+  const [format, setFormat] = useState<Format | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [storeKey, setStoreKey] = useState(0);
 
   const handleFile = (file: File | null) => {
     if (!file) return;
     setError(null);
     setFileName(file.name);
-    setColumns([]);
     const built = buildStore(file);
     if ("error" in built) {
       setError(built.error);
@@ -81,6 +186,8 @@ export function LocalFileDemo() {
     }
     setStore(built.store);
     setFormat(built.format);
+    // Force FileTable to remount so columns reset for the new schema.
+    setStoreKey((k) => k + 1);
   };
 
   return (
@@ -116,96 +223,33 @@ export function LocalFileDemo() {
       </div>
 
       {error ? (
-        <div style={{ color: "var(--bad-fg, #ef4444)", fontSize: "0.85rem" }}>{error}</div>
+        <div style={{ color: "var(--bad-fg, #ef4444)", fontSize: "0.85rem", marginBottom: 12 }}>
+          {error}
+        </div>
       ) : null}
 
-      <div
-        ref={containerRef}
-        style={{
-          width: "100%",
-          height: "55vh",
-          position: "relative",
-          border: "1px solid var(--border)",
-          borderRadius: 6,
-          background: "var(--surface)",
-          overflow: "hidden",
-        }}
-      >
-        {store ? (
-          <Table.Root {...table.rootProps}>
-            <Table.Header
-              style={{
-                padding: 6,
-                background: "var(--surface)",
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              {({ columns: cols }) =>
-                cols.map((col) => (
-                  <Table.HeaderCell
-                    key={col.key}
-                    column={col.key}
-                    style={{
-                      fontWeight: 600,
-                      fontSize: "0.7rem",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                      color: "var(--muted-fg)",
-                    }}
-                  >
-                    <Table.SortTrigger column={col.key}>
-                      {col.key.replace(/_/g, " ")}
-                    </Table.SortTrigger>
-                  </Table.HeaderCell>
-                ))
-              }
-            </Table.Header>
-            <Table.Viewport>
-              {({ rows }) =>
-                rows.map((row) => (
-                  <Table.Row
-                    key={row.key}
-                    row={row}
-                    style={{ borderBottom: "1px solid var(--border)" }}
-                  >
-                    {({ cells }) =>
-                      cells.map((cell) => (
-                        <Table.Cell
-                          key={cell.column}
-                          column={cell.column}
-                          width={cell.width}
-                          offset={cell.offset}
-                          style={{
-                            padding: "6px 10px",
-                            fontSize: "0.78rem",
-                            color: "var(--fg)",
-                          }}
-                        >
-                          {cell.value == null ? "" : String(cell.value)}
-                        </Table.Cell>
-                      ))
-                    }
-                  </Table.Row>
-                ))
-              }
-            </Table.Viewport>
-          </Table.Root>
-        ) : (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--muted-fg)",
-              fontSize: "0.85rem",
-            }}
-          >
-            Pick a file to render a table.
-          </div>
-        )}
-      </div>
+      {store ? (
+        <FileTable key={storeKey} store={store} />
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            height: 480,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+            background: "var(--surface)",
+            color: "var(--muted-fg)",
+            fontSize: "0.85rem",
+          }}
+        >
+          Pick a file to render a table.
+        </div>
+      )}
+
+      <CodeBlock code={codeExamples["local-file"]} title="LocalFileDemo.tsx" />
     </div>
   );
 }

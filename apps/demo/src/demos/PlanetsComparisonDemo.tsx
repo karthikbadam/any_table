@@ -5,21 +5,26 @@ import type {
   StoreFilter,
   TableStore,
 } from "@any_table/react";
-import {
-  Table,
-  portableFilter,
-  useTable,
-} from "@any_table/react";
+import { Table, portableFilter, useTable } from "@any_table/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CodeBlock } from "../components/CodeBlock";
 import { useDatasetLoading } from "../context/DatasetLoadingContext";
-import { ensurePlanetsDuckDB, duckdbStore, hyparquetStore, jsUrlStore } from "../setup-stores";
+import {
+  duckdbStore,
+  ensurePlanetsDuckDB,
+  hyparquetStore,
+  jsUrlStore,
+} from "../setup-stores";
+import { codeExamples } from "./codeExamples";
 
-// ── Shared column layout ───────────────────────────────────────────
+// ── Layout ─────────────────────────────────────────────────────────
+
+const PANEL_HEIGHT = 420;
 
 const columns: ColumnDef[] = [
   { key: "name", width: "9rem" },
   { key: "host_star", width: "9rem" },
-  { key: "discovery_year", width: "5rem" },
+  { key: "discovery_year", width: "6rem" },
   { key: "discovery_method", width: "8rem" },
   { key: "orbital_period_days", width: "7rem" },
   { key: "radius_earth", width: "5rem" },
@@ -28,6 +33,8 @@ const columns: ColumnDef[] = [
   { key: "is_habitable_zone", width: "5rem" },
   { key: "notes", flex: 1, minWidth: "14rem" },
 ];
+
+const ROW_HEIGHT = { numLines: 1, padding: "6px" } as const;
 
 // ── Search box → PortableFilter ────────────────────────────────────
 
@@ -65,15 +72,11 @@ function StorePanel({
   store,
   error,
   filter,
-  sort: externalSort,
+  sort,
   onSortChange,
 }: StorePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const schemaStart = useRef<number>(performance.now());
-  const [schemaMs, setSchemaMs] = useState<number | null>(null);
-  const [firstWindowMs, setFirstWindowMs] = useState<number | null>(null);
 
-  // useTable requires a store; render an error card if not available.
   const table = useTable({
     store: store ?? undefined,
     columns,
@@ -81,35 +84,19 @@ function StorePanel({
     filter,
     containerRef,
     onSortChange,
+    rowHeightConfig: ROW_HEIGHT,
   });
 
-  // Propagate external sort changes into the table (one-way).
+  // Mirror external sort changes into this panel (one-way, guarded against
+  // the cycle by comparing against the panel's current sort).
   useEffect(() => {
     if (!store) return;
-    if (JSON.stringify(table.data.sort) === JSON.stringify(externalSort)) return;
-    table.data.setSort(externalSort);
+    const current = JSON.stringify(table.data.sort ?? null);
+    const target = JSON.stringify(sort ?? null);
+    if (current === target) return;
+    table.data.setSort(sort);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [externalSort, store]);
-
-  // Track rough load timings for the perf strip.
-  useEffect(() => {
-    if (!store) return;
-    schemaStart.current = performance.now();
-    setSchemaMs(null);
-    setFirstWindowMs(null);
-  }, [store]);
-
-  useEffect(() => {
-    if (schemaMs == null && table.data.schema.length > 0) {
-      setSchemaMs(Math.round(performance.now() - schemaStart.current));
-    }
-  }, [table.data.schema, schemaMs]);
-
-  useEffect(() => {
-    if (firstWindowMs == null && table.data.totalRows > 0 && !table.data.isLoading) {
-      setFirstWindowMs(Math.round(performance.now() - schemaStart.current));
-    }
-  }, [table.data.isLoading, table.data.totalRows, firstWindowMs]);
+  }, [sort, store]);
 
   return (
     <div
@@ -120,7 +107,6 @@ function StorePanel({
         borderRadius: 6,
         background: "var(--surface)",
         overflow: "hidden",
-        minHeight: 0,
       }}
     >
       <div
@@ -153,7 +139,14 @@ function StorePanel({
       </div>
 
       {error ? (
-        <div style={{ padding: 12, color: "var(--bad-fg, #ef4444)", fontSize: "0.8rem" }}>
+        <div
+          style={{
+            padding: 12,
+            color: "var(--bad-fg, #ef4444)",
+            fontSize: "0.8rem",
+            height: PANEL_HEIGHT,
+          }}
+        >
           {error}
         </div>
       ) : (
@@ -161,16 +154,14 @@ function StorePanel({
           ref={containerRef}
           style={{
             position: "relative",
-            flex: 1,
-            minHeight: 300,
-            height: "42vh",
+            height: PANEL_HEIGHT,
             overflow: "hidden",
           }}
         >
           <Table.Root {...table.rootProps}>
             <Table.Header
               style={{
-                padding: "6px",
+                padding: "4px 0",
                 background: "var(--surface)",
                 borderBottom: "1px solid var(--border)",
               }}
@@ -186,6 +177,7 @@ function StorePanel({
                       textTransform: "uppercase",
                       letterSpacing: "0.04em",
                       color: "var(--muted-fg)",
+                      padding: "0 8px",
                     }}
                   >
                     <Table.SortTrigger column={col.key}>
@@ -212,14 +204,25 @@ function StorePanel({
                           width={cell.width}
                           offset={cell.offset}
                           style={{
-                            padding: "6px 10px",
+                            padding: "4px 8px",
                             fontSize: "0.78rem",
                             color: "var(--fg)",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                             fontVariantNumeric:
-                              typeof cell.value === "number" ? "tabular-nums" : "normal",
+                              typeof cell.value === "number"
+                                ? "tabular-nums"
+                                : "normal",
                           }}
                         >
-                          {cell.value == null ? "" : String(cell.value)}
+                          {cell.value == null
+                            ? ""
+                            : typeof cell.value === "boolean"
+                              ? cell.value
+                                ? "✓"
+                                : "—"
+                              : String(cell.value)}
                         </Table.Cell>
                       ))
                     }
@@ -239,17 +242,10 @@ function StorePanel({
           fontSize: "0.7rem",
           color: "var(--muted-fg)",
           fontFamily: "SF Mono, Menlo, monospace",
-          display: "flex",
-          justifyContent: "space-between",
         }}
       >
-        <span>
-          {table.data.totalRows} rows{table.data.isLoading ? " · loading…" : ""}
-        </span>
-        <span>
-          schema {schemaMs == null ? "—" : `${schemaMs} ms`} · first window{" "}
-          {firstWindowMs == null ? "—" : `${firstWindowMs} ms`}
-        </span>
+        {table.data.totalRows} rows
+        {table.data.isLoading ? " · loading…" : ""}
       </div>
     </div>
   );
@@ -259,35 +255,47 @@ function StorePanel({
 
 export function PlanetsComparisonDemo() {
   const { duckReady, handle } = useDatasetLoading();
-  const [duckStore, setDuckStore] = useState<TableStore | null>(null);
-  const [duckError, setDuckError] = useState<string | null>(null);
 
-  // Static URLs come through Vite's BASE_URL so GH Pages deploys work.
   const base = import.meta.env.BASE_URL;
   const parquetUrl = `${base}planets.parquet`;
   const jsonUrl = `${base}planets.json`;
 
+  // Hyparquet store can be created synchronously (it lazy-loads the file).
   const hyStore = useMemo(
     () => hyparquetStore({ url: parquetUrl, tableName: "planets_hyparquet" }),
     [parquetUrl],
   );
-  const jsStoreInst = useMemo(
-    () => jsUrlStore({ url: jsonUrl, tableName: "planets_js" }),
-    [jsonUrl],
-  );
 
+  // JS store needs the JSON fetched first; we eagerly load it once.
+  const [jsStoreInst, setJsStoreInst] = useState<TableStore | null>(null);
+  const [jsError, setJsError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    jsUrlStore({ url: jsonUrl, tableName: "planets_js" })
+      .then((s) => {
+        if (!cancelled) setJsStoreInst(s);
+      })
+      .catch((err) => {
+        if (!cancelled) setJsError(String(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [jsonUrl]);
+
+  // DuckDB store needs the planets table created in DuckDB-WASM.
+  const [duckStore, setDuckStore] = useState<TableStore | null>(null);
+  const [duckError, setDuckError] = useState<string | null>(null);
   useEffect(() => {
     if (!duckReady || !handle) return;
     let cancelled = false;
-    (async () => {
-      try {
-        await ensurePlanetsDuckDB(handle, parquetUrl);
-        if (cancelled) return;
-        setDuckStore(duckdbStore(handle, "planets"));
-      } catch (err) {
+    ensurePlanetsDuckDB(handle, parquetUrl)
+      .then(() => {
+        if (!cancelled) setDuckStore(duckdbStore(handle, "planets"));
+      })
+      .catch((err) => {
         if (!cancelled) setDuckError(String(err));
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
@@ -331,20 +339,15 @@ export function PlanetsComparisonDemo() {
             minWidth: 0,
           }}
         />
-        <div
-          style={{
-            fontSize: "0.72rem",
-            color: "var(--muted-fg)",
-          }}
-        >
-          Sort a column in any panel and all three follow.
+        <div style={{ fontSize: "0.72rem", color: "var(--muted-fg)" }}>
+          Sort a column in any panel; all three follow.
         </div>
       </div>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
           gap: 12,
         }}
       >
@@ -369,11 +372,17 @@ export function PlanetsComparisonDemo() {
           label="JS objects"
           badge="In-memory"
           store={jsStoreInst}
+          error={jsError}
           filter={filter}
           sort={sort}
           onSortChange={setSort}
         />
       </div>
+
+      <CodeBlock
+        code={codeExamples["planets-comparison"]}
+        title="PlanetsComparisonDemo.tsx"
+      />
     </div>
   );
 }

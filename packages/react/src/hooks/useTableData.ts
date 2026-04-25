@@ -135,9 +135,14 @@ export function useTableData(options: UseTableDataOptions): TableData {
     async (offset: number, limit: number) => {
       if (!store) return;
       const currentSchema = schemaRef.current;
-      const cols = currentSchema.length > 0 && columns.length > 0
+      // Bail until the schema is known. The init useEffect handles the very
+      // first window itself; calling fetchRows with empty columns would
+      // overwrite the model with empty rows.
+      if (currentSchema.length === 0) return;
+      const cols = columns.length > 0
         ? currentSchema.filter((s) => columns.includes(s.name))
         : currentSchema;
+      if (cols.length === 0) return;
       const sortFields: SortField[] | null = sort == null
         ? null
         : Array.isArray(sort) ? sort : [sort];

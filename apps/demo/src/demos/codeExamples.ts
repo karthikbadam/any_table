@@ -599,4 +599,150 @@ export function CrossFilterDemo() {
     </>
   );
 }`,
+
+  "planets-comparison": `import {
+  DuckDBStore,
+  HyparquetStore,
+  JSStore,
+  Table,
+  portableFilter,
+  useTable,
+  type PortableFilter,
+  type Sort,
+  type StoreFilter,
+} from "@any_table/react";
+
+// One layout shared across all three panels — same data, three stores.
+const columns = [
+  { key: "name", width: "9rem" },
+  { key: "host_star", width: "9rem" },
+  { key: "discovery_year", width: "6rem" },
+  { key: "discovery_method", width: "8rem" },
+  { key: "notes", flex: 1, minWidth: "14rem" },
+];
+
+// One PortableFilter per search term works on every store.
+function buildFilter(q: string): StoreFilter | null {
+  if (!q.trim()) return null;
+  const f: PortableFilter = {
+    op: "or",
+    clauses: ["name", "host_star", "notes"].map((c) => ({
+      op: "contains", column: c, value: q, caseInsensitive: true,
+    })),
+  };
+  return portableFilter(f);
+}
+
+function Panel({ store, filter, sort, onSortChange }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const table = useTable({
+    store, columns, rowKey: "name", filter, containerRef, onSortChange,
+    rowHeightConfig: { numLines: 1, padding: "6px" },
+  });
+  return (
+    <div ref={containerRef} style={{ height: 420, position: "relative" }}>
+      <Table.Root {...table.rootProps}>{/* ...header + viewport... */}</Table.Root>
+    </div>
+  );
+}
+
+export function PlanetsComparisonDemo({ duckCoordinator }) {
+  const [filter, setFilter] = useState<StoreFilter | null>(null);
+  const [sort, setSort] = useState<Sort | null>(null);
+
+  // Each store is built once and reused across renders.
+  const duck = useMemo(
+    () => new DuckDBStore({ coordinator: duckCoordinator, tableName: "planets" }),
+    [duckCoordinator],
+  );
+  const hy = useMemo(
+    () => new HyparquetStore({
+      tableName: "planets",
+      source: { kind: "url", url: "/planets.parquet" },
+    }),
+    [],
+  );
+  const [js, setJs] = useState<JSStore | null>(null);
+  useEffect(() => {
+    fetch("/planets.json").then((r) => r.json()).then((rows) =>
+      setJs(new JSStore({ tableName: "planets", source: { kind: "rows", rows } })),
+    );
+  }, []);
+
+  return (
+    <>
+      <input onChange={(e) => setFilter(buildFilter(e.target.value))} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+        <Panel store={duck} filter={filter} sort={sort} onSortChange={setSort} />
+        <Panel store={hy}   filter={filter} sort={sort} onSortChange={setSort} />
+        <Panel store={js}   filter={filter} sort={sort} onSortChange={setSort} />
+      </div>
+    </>
+  );
+}`,
+
+  "local-file": `import {
+  HyparquetStore,
+  JSStore,
+  Table,
+  useTable,
+  type ColumnDef,
+  type TableStore,
+} from "@any_table/react";
+
+// Pick a store based on the file extension; columns are derived from
+// the discovered schema so the table works without a hand-written layout.
+function buildStore(file: File): TableStore {
+  const ext = file.name.toLowerCase().match(/\\.([^.]+)$/)?.[1];
+  const tableName = file.name.replace(/\\.[^.]+$/, "");
+  if (ext === "parquet") {
+    return new HyparquetStore({ tableName, source: { kind: "file", file } });
+  }
+  const format =
+    ext === "ndjson" || ext === "jsonl" ? "ndjson" :
+    ext === "csv"    || ext === "tsv"   ? "csv"    : "json";
+  return new JSStore({
+    tableName,
+    source: { kind: "file", file, format },
+  });
+}
+
+function FileTable({ store }: { store: TableStore }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState<ColumnDef[]>([]);
+  const table = useTable({
+    store, columns, rowKey: columns[0]?.key ?? "_", containerRef,
+    rowHeightConfig: { numLines: 1, padding: "4px" },
+  });
+
+  // Seed the column layout from the inferred schema, once.
+  useEffect(() => {
+    if (columns.length === 0 && table.data.schema.length > 0) {
+      setColumns(table.data.schema.map((s) => ({ key: s.name, flex: 1, minWidth: "8rem" })));
+    }
+  }, [columns.length, table.data.schema]);
+
+  return (
+    <div ref={containerRef} style={{ height: 480, position: "relative" }}>
+      <Table.Root {...table.rootProps}>{/* ...header + viewport... */}</Table.Root>
+    </div>
+  );
+}
+
+export function LocalFileDemo() {
+  const [store, setStore] = useState<TableStore | null>(null);
+  return (
+    <>
+      <input
+        type="file"
+        accept=".parquet,.json,.ndjson,.csv"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) setStore(buildStore(f));
+        }}
+      />
+      {store ? <FileTable key={store.tableName} store={store} /> : null}
+    </>
+  );
+}`,
 };

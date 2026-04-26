@@ -1,11 +1,10 @@
 import { type RefObject, useMemo } from 'react';
-import type { Selection } from '@uwdata/mosaic-core';
 import type {
   ColumnDef,
   Sort,
   RowHeightConfig,
   RowRecord,
-  StoreFilter,
+  MosaicSelectionLike,
   TableStore,
 } from '@any_table/core';
 import { useTableData } from './useTableData';
@@ -27,7 +26,7 @@ export interface UseTableOptions {
   store?: TableStore;
   columns: ColumnDef[];
   rowKey: string;
-  filter?: Selection | StoreFilter | null;
+  filter?: MosaicSelectionLike | null;
   containerRef: RefObject<HTMLElement | null>;
 
   // Display mode

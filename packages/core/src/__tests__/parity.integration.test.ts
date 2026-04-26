@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { Selection, clausePoint } from '@uwdata/mosaic-core';
+import { column } from '@uwdata/mosaic-sql';
 import { HyparquetStore } from '../store/hyparquet/HyparquetStore';
 import { JSStore } from '../store/js/JSStore';
-import { portableFilter, type PortableFilter } from '../store/TableStore';
 
 const PUBLIC = resolve(__dirname, '../../../../apps/demo/public');
 
@@ -50,7 +51,7 @@ describe('HyparquetStore ↔ JSStore parity on planets fixture', () => {
     }
   });
 
-  it('filtered + sorted counts match across both stores', async () => {
+  it('filtered + sorted counts and rows match across both stores', async () => {
     const hy = new HyparquetStore({
       tableName: 'planets',
       source: { kind: 'buffer', buffer: readBuffer() },
@@ -60,10 +61,13 @@ describe('HyparquetStore ↔ JSStore parity on planets fixture', () => {
       source: { kind: 'rows', rows: readJson() as Record<string, unknown>[] },
     });
 
-    const f: PortableFilter = { op: 'eq', column: 'is_habitable_zone', value: true };
-    const wrapped = portableFilter(f);
+    const sel = Selection.intersect();
+    sel.update(
+      clausePoint(column('is_habitable_zone'), true, { source: 'parityTest' }),
+    );
+    const filter = sel as never;
 
-    expect(await hy.getRowCount(wrapped)).toBe(await js.getRowCount(wrapped));
+    expect(await hy.getRowCount(filter)).toBe(await js.getRowCount(filter));
 
     const schema = await hy.getSchema();
     const req = {
@@ -71,7 +75,7 @@ describe('HyparquetStore ↔ JSStore parity on planets fixture', () => {
       offset: 0,
       limit: 20,
       sort: [{ column: 'name', desc: false }],
-      filter: wrapped,
+      filter,
     };
     const hyRows = await hy.fetchRows(req);
     const jsRows = await js.fetchRows(req);

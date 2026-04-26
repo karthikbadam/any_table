@@ -31,17 +31,17 @@ a table", or "build a data grid with AnyTable". For full reference, read
 
 ## When the user provides data
 
-Choose the `spec.data` variant that matches the source and pick the store
-accordingly — AnyTable handles the glue.
+Two shapes can live inside the JSON spec; everything else is passed via the
+`store` prop on `<AnyTable>`.
 
-- **Array of plain objects** → `data: { rows: [...] }`. Goes through `JSStore`; no provider required.
-- **DuckDB/Mosaic table name** → `data: { table: "<name>" }`. Wrap the app in `<AnyTableProvider coordinator={...}>`.
-- **Parquet URL** → `data: { parquet: { url: "https://..." } }`. Uses `HyparquetStore`. No DuckDB needed; tell them to `pnpm add hyparquet`.
-- **Local file** (drag-drop, `<input type="file">`) → register it on the provider as a resource and reference it:
-  `<AnyTableProvider resources={{ myFile: file }}>` then `data: { parquet: { ref: "myFile" } }` or
-  `data: { file: { ref: "myFile", format: "csv" } }`.
+- **Array of plain objects** → `data: { rows: [...] }`. Goes through `JSStore`; no extra setup.
+- **Parquet URL** → `data: { parquet: { url: "https://..." } }`. Uses `HyparquetStore`. Tell them to `pnpm add hyparquet`.
+- **DuckDB / Mosaic** → construct a `MosaicDuckDBStore` from `@any_table/core`, pass it as `store={...}`, and set `data: { rows: [] }` in the spec. Tell them to `pnpm add @uwdata/mosaic-core @uwdata/mosaic-sql`.
+- **Local file** (drag-drop, `<input type="file">`) → construct a `JSStore` or `HyparquetStore` with `source: { kind: 'file', file }` and pass via `store={...}`.
 
-For filters across any store, build a `PortableFilter` and wrap it with `portableFilter(...)`. Avoid `Selection` unless the table must participate in Mosaic cross-filter — `Selection` only works with `MosaicDuckDBStore`.
+For filters, use a Mosaic `Selection`. One filter type for every store — see
+`@any_table/react/ai/llms.txt` "Filters" section for the supported clause
+shapes (`point`, `interval`, `match`).
 
 ## When the user asks for a custom cell
 

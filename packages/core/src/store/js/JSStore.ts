@@ -1,6 +1,11 @@
 import type { ColumnSchema } from '../../types/interfaces';
 import type { RowRecord } from '../../types/mosaic';
-import type { FetchRowsRequest, StoreFilter, TableStore } from '../TableStore';
+import type {
+  FetchRowsRequest,
+  MosaicSelectionLike,
+  TableStore,
+} from '../TableStore';
+import { selectionToPredicate } from '../clauseAdapter';
 import { MemoryEngine } from '../memory/MemoryEngine';
 import { inferSchema } from './inferSchema';
 import { parseCSV } from './csv';
@@ -22,6 +27,10 @@ export interface JSStoreOptions {
 /**
  * In-memory store over a plain row array or a File/Blob containing
  * JSON / NDJSON / CSV. Filter, sort, and window are handled by MemoryEngine.
+ *
+ * Filtering accepts a Mosaic Selection; clauses are translated to a JS
+ * row predicate via `selectionToPredicate`. Unsupported clause shapes are
+ * dropped with a warning — for richer SQL filtering use MosaicDuckDBStore.
  */
 export class JSStore implements TableStore {
   readonly id = 'js';
@@ -62,14 +71,14 @@ export class JSStore implements TableStore {
     return this.schema;
   }
 
-  async getRowCount(filter: StoreFilter | null): Promise<number> {
+  async getRowCount(filter: MosaicSelectionLike | null): Promise<number> {
     await this.load();
-    return this.engine.count(filter);
+    return this.engine.count(selectionToPredicate(filter));
   }
 
   async fetchRows(req: FetchRowsRequest): Promise<RowRecord[]> {
     await this.load();
-    this.engine.update(req.filter, req.sort);
+    this.engine.update(selectionToPredicate(req.filter), req.sort);
     return this.engine.window(req.offset, req.limit);
   }
 }

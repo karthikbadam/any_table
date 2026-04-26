@@ -1,16 +1,27 @@
 # Changelog
 
-## Unreleased — Mosaic-honest naming
+## Unreleased — Cleaner surface, Mosaic-native filtering
 
-### Changed
+### Changed (breaking)
 
-- **`DuckDBStore` → `MosaicDuckDBStore`** (`@any_table/core`, re-exported from `@any_table/react`). The store is built on `@uwdata/mosaic-core` and `@uwdata/mosaic-sql`; the new name makes the dependency explicit. Constructor options renamed to `MosaicDuckDBStoreOptions`; the structural coordinator type is now `MosaicCoordinator`.
-- **`<TableStoreProvider>` → `<AnyTableProvider>`** (`@any_table/react`). Behavior unchanged: still accepts `stores`, `resolve`, `coordinator`, and `resources`. The internal coordinator-auto-wrap now constructs a `MosaicDuckDBStore`.
-- The internal `DuckDBStoreSqlApi` wrapper interface in `MosaicDuckDBStore` and the parametric `MosaicSqlApi` in `Filter.ts` are gone; `filterToMosaicSQL` now accepts the `@uwdata/mosaic-sql` module directly. Mosaic stays an *optional* peer dependency — `@any_table/core` lazy-imports it inside `MosaicDuckDBStore`, so consumers using only `HyparquetStore` / `JSStore` don't pay for it.
+- **`DuckDBStore` → `MosaicDuckDBStore`** (`@any_table/core`). The store is built on `@uwdata/mosaic-core` and `@uwdata/mosaic-sql`; the new name makes the dependency explicit. Constructor options renamed to `MosaicDuckDBStoreOptions`; the structural coordinator type is now `MosaicCoordinator`.
+- **One filter type: Mosaic `Selection`.** `useTable({ filter })` and `<AnyTable filter={...}>` accept a `MosaicSelectionLike | null`. The previous `StoreFilter` discriminated union (`portable` / `predicate` / `mosaic-selection`) is gone, along with the `portableFilter()`, `predicateFilter()`, `selectionFilter()`, `compileFilter()`, and `filterToMosaicSQL()` helpers and the `PortableFilter` / `RowPredicate` AST. Each store adapts the Selection internally:
+  - `MosaicDuckDBStore` evaluates `selection.predicate(undefined)` as native SQL via DuckDB.
+  - `JSStore` / `HyparquetStore` translate the Selection's clauses to a JS row predicate via the new `selectionToPredicate` (`@any_table/core/store/clauseAdapter`). Supported clause shapes: `point`, `interval`, `match` (contains / prefix / suffix / regexp). Anything else is dropped with a `console.warn`.
+- **`@any_table/react` no longer re-exports from `@any_table/core`.** Consumers import store / type / filter symbols directly from `@any_table/core` and Mosaic primitives from `@uwdata/mosaic-core`. The react package owns React-shaped surface only (hooks, components, declarative API).
+- **`apache-arrow` pinned to `^21`** via `pnpm.overrides`. The transitive `^17` from `@duckdb/duckdb-wasm` ships a broken `bin` field that produces install warnings; `^21` is current latest and warning-free.
 
-### Removed
+### Removed (breaking)
 
-- `<MosaicProvider>` — the thin compat alias over `TableStoreProvider`. Use `<AnyTableProvider>`.
+- **`<AnyTableProvider>`** and **`<MosaicProvider>`** — both deleted. There is no provider component. Pass a `store` directly via the new `<AnyTable store={...} />` prop or `useTable({ store })`. Inline `data: { rows }` and URL-resolved `data: { parquet: { url } }` work without a store.
+- **`useTableStore`, `useTableStoreRegistry`, `useMosaicCoordinator`, `TableStoreContext`, `MosaicContext`** — all gone. Coordinators / files / custom stores are passed via props at the call site.
+- **Spec `data` variants that needed a registry**: `{ table }`, `{ parquet: { ref } }`, `{ file: { ref, format } }`, `{ store: { ref } }` are dropped from `TableSpec`. The two remaining variants are JSON-encodable: `{ rows }` and `{ parquet: { url } }`. Anything else is passed via `<AnyTable store={...} />`.
+- **`useTable({ table: "name" })`** — gone. Use `useTable({ store })` or `useTable({ rows })`.
+
+### Added
+
+- **`selectionToPredicate(selection)`** in `@any_table/core` — translates a Mosaic Selection's active clauses into a JS row predicate. Used internally by `JSStore` / `HyparquetStore`; exported in case downstream code wants the same translation. Eleven unit tests in `packages/core/src/__tests__/clauseAdapter.test.ts` cover point / interval / match / intersect / union / unsupported-clause paths.
+- **`store` prop on `<AnyTable>`** — explicit TableStore for backends that need a runtime handle.
 
 ## Earlier — Multi-store migration
 

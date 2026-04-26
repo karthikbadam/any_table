@@ -1,7 +1,12 @@
 import type { ColumnSchema } from '../../types/interfaces';
 import type { RowRecord } from '../../types/mosaic';
 import { mapParquetType, type ParquetFieldInfo } from '../../types/categories';
-import type { FetchRowsRequest, StoreFilter, TableStore } from '../TableStore';
+import type {
+  FetchRowsRequest,
+  MosaicSelectionLike,
+  TableStore,
+} from '../TableStore';
+import { selectionToPredicate } from '../clauseAdapter';
 import { MemoryEngine } from '../memory/MemoryEngine';
 
 export type ParquetSource =
@@ -58,9 +63,10 @@ async function loadHyparquet(): Promise<HyparquetApi> {
  * TableStore backed by a Parquet file read via hyparquet.
  *
  * - No filter + no sort: paginated reads via `parquetReadObjects({ rowStart, rowEnd })`.
- * - With filter or sort: the file is fully materialized once into a MemoryEngine,
- *   then filter/sort/window are applied client-side.
- * - Mosaic Selection filters are rejected (use a PortableFilter instead).
+ * - With filter or sort: the file is fully materialized once into a
+ *   MemoryEngine, then filter/sort/window are applied client-side. The
+ *   Mosaic Selection is translated into a JS row predicate via
+ *   `selectionToPredicate`.
  */
 export class HyparquetStore implements TableStore {
   readonly id = 'hyparquet';
@@ -153,13 +159,13 @@ export class HyparquetStore implements TableStore {
     return this.schema;
   }
 
-  async getRowCount(filter: StoreFilter | null): Promise<number> {
+  async getRowCount(filter: MosaicSelectionLike | null): Promise<number> {
     if (!filter) {
       await this.loadMetadata();
       return this.totalRows;
     }
     await this.loadFull();
-    return this.engine!.count(filter);
+    return this.engine!.count(selectionToPredicate(filter));
   }
 
   async fetchRows(req: FetchRowsRequest): Promise<RowRecord[]> {
@@ -179,7 +185,7 @@ export class HyparquetStore implements TableStore {
     }
 
     await this.loadFull();
-    this.engine!.update(req.filter, req.sort);
+    this.engine!.update(selectionToPredicate(req.filter), req.sort);
     return this.engine!.window(req.offset, req.limit);
   }
 }

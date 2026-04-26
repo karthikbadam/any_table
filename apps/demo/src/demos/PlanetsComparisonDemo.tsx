@@ -1,12 +1,15 @@
 import type {
   ColumnDef,
-  PortableFilter,
+  MosaicSelectionLike,
   Sort,
-  StoreFilter,
   TableStore,
 } from "@any_table/core";
-import { portableFilter } from "@any_table/core";
 import { Table, useTable } from "@any_table/react";
+import {
+  Selection as MosaicSelection,
+  clauseMatch,
+} from "@uwdata/mosaic-core";
+import { column } from "@uwdata/mosaic-sql";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { useDatasetLoading } from "../context/DatasetLoadingContext";
@@ -35,22 +38,28 @@ const columns: ColumnDef[] = [
   { key: "notes", flex: 1, minWidth: "14rem" },
 ];
 
-// ── Search box → PortableFilter ────────────────────────────────────
+// ── Search box → Mosaic Selection ──────────────────────────────────
+//
+// "contains across N columns" is expressed as a union (OR) Selection of
+// `clauseMatch` clauses, one per column. MosaicDuckDBStore evaluates the
+// resulting SQL natively; JSStore / HyparquetStore route the same
+// Selection through `selectionToPredicate` to build a JS predicate.
 
-function buildFilter(query: string): StoreFilter | null {
+const SEARCH_COLUMNS = ["name", "host_star", "discovery_method", "notes"];
+
+function buildFilter(query: string): MosaicSelectionLike | null {
   const term = query.trim();
   if (!term) return null;
-  const likeCols = ["name", "host_star", "discovery_method", "notes"];
-  const filter: PortableFilter = {
-    op: "or",
-    clauses: likeCols.map((c) => ({
-      op: "contains",
-      column: c,
-      value: term,
-      caseInsensitive: true,
-    })),
-  };
-  return portableFilter(filter);
+  const sel = MosaicSelection.union();
+  for (const col of SEARCH_COLUMNS) {
+    sel.update(
+      clauseMatch(column(col), term, {
+        source: `search-${col}`,
+        method: "contains",
+      }),
+    );
+  }
+  return sel as unknown as MosaicSelectionLike;
 }
 
 // ── Per-store panel ────────────────────────────────────────────────
@@ -60,7 +69,7 @@ interface StorePanelProps {
   badge: string;
   store: TableStore | null;
   error?: string | null;
-  filter: StoreFilter | null;
+  filter: MosaicSelectionLike | null;
   sort: Sort | null;
   onSortChange: (s: Sort | null) => void;
 }

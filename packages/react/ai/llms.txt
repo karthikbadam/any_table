@@ -9,7 +9,7 @@ JSON surface an LLM should emit.
 ## One-line install
 
 ```bash
-pnpm add @any_table/react
+pnpm add @any_table/react @any_table/core
 ```
 
 Peer deps: `react@>=18`, `react-dom@>=18`. `@uwdata/mosaic-core`,
@@ -96,54 +96,50 @@ registerCell("sparkline", ({ value }) => <Spark data={value as number[]} />);
 
 ## Data sources
 
-Pick one variant for `spec.data`:
+Two JSON-encodable variants live on `spec.data`:
 
-- `{ rows: [...] }` — inline rows. Routed through an internal `JSStore`. No provider needed.
-- `{ table: "orders" }` — look up a store registered on `<AnyTableProvider>` (typically `MosaicDuckDBStore`; can be any `TableStore`).
+- `{ rows: [...] }` — inline rows. Routed through an internal `JSStore`.
 - `{ parquet: { url: "/data.parquet" } }` — stream a Parquet file via `HyparquetStore`. Peer dep: `hyparquet`.
-- `{ parquet: { ref: "my_file" } }` — Parquet from a `File`/`Blob`/`ArrayBuffer` registered on `<AnyTableProvider resources={{ my_file: fileObj }}>`.
-- `{ file: { ref: "upload", format: "json" | "ndjson" | "csv" } }` — JS-side parse of a registered File/Blob.
-- `{ store: { ref: "custom" } }` — any custom `TableStore` registered on the provider's `resources`.
 
-### Provider
-
-Mount one `<AnyTableProvider>` at the root. Common shapes:
+Anything that needs a runtime handle — a Mosaic coordinator (DuckDB), a `File`
+or `Blob`, or a custom `TableStore` — is passed via the **`store` prop** on
+`<AnyTable>`. There is no provider, registry, or `data: { table }` lookup.
 
 ```tsx
-// DuckDB via Mosaic coordinator
-<AnyTableProvider coordinator={coordinator}>{children}</AnyTableProvider>
+import { MosaicDuckDBStore } from "@any_table/core";
+import { AnyTable } from "@any_table/react";
 
-// Explicit stores
-<AnyTableProvider stores={[new JSStore({ tableName: "orders", source: { kind: "rows", rows } })]}>
-
-// Files referenced from a spec
-<AnyTableProvider resources={{ upload: file }}>
+const store = new MosaicDuckDBStore({ coordinator, tableName: "orders" });
+<AnyTable spec={spec} store={store} />
 ```
 
-## Filters: `PortableFilter`
+`spec.data` is still required for schema reasons; pass `{ rows: [] }` when you
+provide a `store` prop.
 
-All three stores accept a portable filter AST via `useTable({ filter })` or
-`<AnyTable filter={...}>`:
+## Filters: Mosaic `Selection`
+
+There is exactly one filter type — a Mosaic `Selection` (typed structurally as
+`MosaicSelectionLike` in `@any_table/core` so non-Mosaic typings still work).
+Pass it to `useTable({ filter })` or `<AnyTable filter={...}>`.
 
 ```ts
-import { portableFilter, type PortableFilter } from "@any_table/react";
+import { Selection, clauseMatch, clauseInterval } from "@uwdata/mosaic-core";
+import { column } from "@uwdata/mosaic-sql";
 
-const q: PortableFilter = {
-  op: "or",
-  clauses: [
-    { op: "contains", column: "name", value: "ada", caseInsensitive: true },
-    { op: "ge",       column: "score", value: 80 },
-  ],
-};
+const sel = Selection.union();
+sel.update(clauseMatch(column("name"),  q, { source: "s1", method: "contains" }));
+sel.update(clauseMatch(column("notes"), q, { source: "s2", method: "contains" }));
 
-<AnyTable spec={spec} filter={portableFilter(q)} />
+<AnyTable spec={spec} store={store} filter={sel} />
 ```
 
-`MosaicDuckDBStore` compiles the AST into Mosaic-sql and pushes it down. `HyparquetStore` and `JSStore` evaluate it in memory.
+How each store handles it:
 
-### Mosaic `Selection` works only with `MosaicDuckDBStore`
+- **`MosaicDuckDBStore`** evaluates the Selection's predicate as native SQL via DuckDB. Any clause shape works.
+- **`JSStore` / `HyparquetStore`** translate clauses to a JS row predicate via `selectionToPredicate` (`@any_table/core`). Supported clauses: `point`, `interval`, `match` (contains / prefix / suffix / regexp). Anything else is dropped with a `console.warn`.
 
-Mosaic `Selection` objects (cross-filter brushes, etc.) require `MosaicDuckDBStore` because they resolve into a Mosaic-sql predicate at query time. `HyparquetStore` and `JSStore` reject `selectionFilter(...)` with a clear error — for those stores, build an equivalent `PortableFilter` (e.g. `{ op: "ge", column: "x", value: lo }`) and pass it via `portableFilter(...)`. If you need cross-store brushing, mirror the brush state into a `PortableFilter` yourself.
+If you need richer filtering against in-memory rows, evaluate it via
+MosaicDuckDBStore — it's the one that owns a SQL engine.
 
 ## Validation
 
@@ -199,3 +195,6 @@ It runs Zod shape validation plus 11 semantic checks. See JSON Schema at
 - `TableSpec`, `ColumnSpec`, `CellSpec` — types.
 - Low-level `useTable` + `Table.*` compound components remain available as an
   escape hatch for custom layouts.
+- Stores, types, and `selectionToPredicate` come from `@any_table/core`.
+- Mosaic primitives (`Selection`, `Coordinator`, `MosaicClient`, clause
+  builders) come from `@uwdata/mosaic-core` directly.

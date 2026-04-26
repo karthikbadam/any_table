@@ -614,12 +614,12 @@ export function CrossFilterDemo() {
   MosaicDuckDBStore,
   HyparquetStore,
   JSStore,
-  portableFilter,
-  type PortableFilter,
+  type MosaicSelectionLike,
   type Sort,
-  type StoreFilter,
 } from "@any_table/core";
 import { Table, useTable } from "@any_table/react";
+import { Selection, clauseMatch } from "@uwdata/mosaic-core";
+import { column } from "@uwdata/mosaic-sql";
 
 // One layout shared across all three panels — same data, three stores.
 const columns = [
@@ -630,16 +630,16 @@ const columns = [
   { key: "notes", flex: 1, minWidth: "14rem" },
 ];
 
-// One PortableFilter per search term works on every store.
-function buildFilter(q: string): StoreFilter | null {
+// One Mosaic Selection works on every store. MosaicDuckDBStore evaluates
+// it as SQL via DuckDB; JSStore / HyparquetStore translate clauses to a
+// JS predicate via @any_table/core's selectionToPredicate.
+function buildFilter(q: string): MosaicSelectionLike | null {
   if (!q.trim()) return null;
-  const f: PortableFilter = {
-    op: "or",
-    clauses: ["name", "host_star", "notes"].map((c) => ({
-      op: "contains", column: c, value: q, caseInsensitive: true,
-    })),
-  };
-  return portableFilter(f);
+  const sel = Selection.union();
+  for (const c of ["name", "host_star", "notes"]) {
+    sel.update(clauseMatch(column(c), q, { source: \`s-\${c}\`, method: "contains" }));
+  }
+  return sel as unknown as MosaicSelectionLike;
 }
 
 function Panel({ store, filter, sort, onSortChange }) {
@@ -656,7 +656,7 @@ function Panel({ store, filter, sort, onSortChange }) {
 }
 
 export function PlanetsComparisonDemo({ duckCoordinator }) {
-  const [filter, setFilter] = useState<StoreFilter | null>(null);
+  const [filter, setFilter] = useState<MosaicSelectionLike | null>(null);
   const [sort, setSort] = useState<Sort | null>(null);
 
   // Each store is built once and reused across renders.

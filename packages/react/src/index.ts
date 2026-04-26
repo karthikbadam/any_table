@@ -1,10 +1,10 @@
 // @any_table/react
 //
 // This package owns the React-shaped surface only: hooks, components,
-// contexts, declarative API. Consumers import store/filter/AST symbols
+// contexts, declarative API. Consumers import store/filter symbols
 // (MosaicDuckDBStore, JSStore, HyparquetStore, ColumnDef, TableStore,
-// MosaicSelectionLike, portableFilter, …) directly from `@any_table/core`.
-// Mosaic primitives (Coordinator, Selection, MosaicClient) come from
+// MosaicSelectionLike) directly from `@any_table/core`. Mosaic primitives
+// (Coordinator, Selection, MosaicClient, clausePoint, …) come from
 // `@uwdata/mosaic-core`.
 
 // Contexts (internal table-rendering contexts only)

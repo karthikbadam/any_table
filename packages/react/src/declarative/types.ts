@@ -1,6 +1,5 @@
 import type { RefObject, ReactNode, CSSProperties } from 'react';
-import type { Selection } from '@uwdata/mosaic-core';
-import type { Sort, StoreFilter, TableStore } from '@any_table/core';
+import type { MosaicSelectionLike, Sort, TableStore } from '@any_table/core';
 
 // Re-export shared TableSpec types from the spec package so downstream
 // consumers of @any_table/react still see them on this entry point.
@@ -27,7 +26,7 @@ export interface AnyTableProps {
    * parquet, `spec.data` alone is enough.
    */
   store?: TableStore;
-  filter?: Selection | StoreFilter | null;
+  filter?: MosaicSelectionLike | null;
   onSortChange?: (sort: Sort | null) => void;
   containerRef?: RefObject<HTMLElement | null>;
   className?: string;

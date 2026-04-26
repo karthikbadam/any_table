@@ -133,31 +133,43 @@ function onFile(file: File) {
 }
 ```
 
-## Providers
+## No provider
 
-- `<AnyTableProvider coordinator={coordinator} stores={[…]} resources={{ … }}>` — the provider. Accepts any combination of a Mosaic coordinator (auto-wraps unresolved table names in `MosaicDuckDBStore`), explicit stores, and named resources (File/Blob) referenced from `TableSpec.data` variants.
+There is no provider component. Construct the store you need and pass it as the
+`store` prop on `<AnyTable>` (or `useTable({ store })`):
+
+```tsx
+import { MosaicDuckDBStore } from "@any_table/core";
+
+const store = new MosaicDuckDBStore({ coordinator, tableName: "orders" });
+<AnyTable spec={spec} store={store} />
+```
+
+Inline rows (`data: { rows }`) and URL-fetched parquet (`data: { parquet: { url } }`)
+don't need a `store` — they're constructed from the spec.
 
 ## Filters across stores
 
-Build a `PortableFilter` once and pass it to any store:
+There is one filter type — a Mosaic `Selection`. Pass it to `useTable({ filter })`
+or `<AnyTable filter={...}>`:
 
 ```tsx
-import { portableFilter, type PortableFilter } from "@any_table/react";
+import { Selection, clauseMatch } from "@uwdata/mosaic-core";
+import { column } from "@uwdata/mosaic-sql";
 
-const search: PortableFilter = {
-  op: "or",
-  clauses: columns.map((c) => ({
-    op: "contains",
-    column: c,
-    value: query,
-    caseInsensitive: true,
-  })),
-};
+const sel = Selection.union();
+for (const c of ["name", "host_star", "notes"]) {
+  sel.update(clauseMatch(column(c), query, { source: `s-${c}`, method: "contains" }));
+}
 
-<AnyTable spec={spec} filter={portableFilter(search)} />
+<AnyTable spec={spec} store={store} filter={sel} />
 ```
 
-Mosaic `Selection` objects still work with `MosaicDuckDBStore` — the other two stores throw a helpful error that points you at `PortableFilter`.
+`MosaicDuckDBStore` evaluates the Selection as native SQL via DuckDB. `JSStore`
+and `HyparquetStore` translate clauses to a JS row predicate via
+`selectionToPredicate` (re-exported from `@any_table/core`). Supported clause
+shapes: `point`, `interval`, `match`. Richer SQL filtering: use
+`MosaicDuckDBStore`.
 
 ## License
 

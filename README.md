@@ -10,8 +10,7 @@ AnyTable reads from one of three in-browser **stores**. Pick based on how your d
 |---|---|---|---|
 | Sources | Parquet, CSV, JSON, any registered table | Parquet (URL / File / ArrayBuffer) | `RowRecord[]`, File (JSON / NDJSON / CSV) |
 | Filter pushdown | Yes (SQL) | No (in-memory) | No (in-memory) |
-| Cross-filter / Mosaic `Selection` | Yes | No | No |
-| `PortableFilter` AST | Yes | Yes | Yes |
+| Mosaic `Selection` filter | Native | via clause adapter (point/interval/match) | via clause adapter (point/interval/match) |
 | Large data (>1M rows) | Recommended | OK (streamed windows) | Not recommended |
 | Bundle cost | `@duckdb/duckdb-wasm` + Mosaic | `hyparquet` (small) | Zero |
 
@@ -84,13 +83,19 @@ pnpm dev
 ## Quick Start
 
 ```tsx
-import { useTable, Table, AnyTableProvider } from "@any_table/react";
+import { MosaicDuckDBStore } from "@any_table/core";
+import { useTable, Table } from "@any_table/react";
+import { useMemo } from "react";
 
-function MyTable() {
+function MyTable({ coordinator }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const store = useMemo(
+    () => new MosaicDuckDBStore({ coordinator, tableName: "orders" }),
+    [coordinator],
+  );
 
   const table = useTable({
-    table: "orders",
+    store,
     columns: [
       { key: "id", width: "5rem" },
       { key: "customer", flex: 2 },

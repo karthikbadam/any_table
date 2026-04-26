@@ -8,7 +8,6 @@ import {
   type RowRecord,
   type Sort,
   type SortField,
-  type StoreFilter,
   type TableStore,
 } from "@any_table/core";
 import type { TableData } from "../context/DataContext";
@@ -22,43 +21,11 @@ export interface UseTableDataOptions {
   columns: string[];
   rowKey: string;
   /**
-   * Filter. Accepts:
-   *   - `StoreFilter` (preferred, portable across all stores)
-   *   - Mosaic `Selection` (auto-wrapped for MosaicDuckDBStore)
-   *   - null / undefined → no filter
+   * Filter. A Mosaic `Selection` (or anything matching the structural
+   * `MosaicSelectionLike` shape). null / undefined disables filtering.
+   * Each store adapts the selection internally — see TableStore.ts.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filter?: StoreFilter | MosaicSelectionLike | any | null;
-}
-
-function isMosaicSelection(value: unknown): value is MosaicSelectionLike {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    typeof (value as MosaicSelectionLike).addEventListener === 'function'
-  );
-}
-
-function isStoreFilter(value: unknown): value is StoreFilter {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    'kind' in (value as object) &&
-    ['portable', 'predicate', 'mosaic-selection'].includes(
-      (value as { kind: string }).kind,
-    )
-  );
-}
-
-function normalizeFilter(
-  filter: UseTableDataOptions['filter'],
-): StoreFilter | null {
-  if (filter == null) return null;
-  if (isStoreFilter(filter)) return filter;
-  if (isMosaicSelection(filter)) {
-    return { kind: 'mosaic-selection', selection: filter };
-  }
-  return null;
+  filter?: MosaicSelectionLike | null;
 }
 
 export function useTableData(options: UseTableDataOptions): TableData {
@@ -104,7 +71,7 @@ export function useTableData(options: UseTableDataOptions): TableData {
   const windowRef = useRef({ offset: 0, limit: 100 });
   const requestIdRef = useRef(0);
 
-  const normalizedFilter = useMemo(() => normalizeFilter(filter), [filter]);
+  const normalizedFilter: MosaicSelectionLike | null = filter ?? null;
   const schemaRef = useRef<ColumnSchema[]>([]);
   schemaRef.current = schema;
 
@@ -199,9 +166,9 @@ export function useTableData(options: UseTableDataOptions): TableData {
 
     // Subscribe to Mosaic Selection changes so cross-filter keeps working.
     const cleanup: Array<() => void> = [];
-    if (normalizedFilter?.kind === 'mosaic-selection') {
+    if (normalizedFilter && typeof normalizedFilter.addEventListener === 'function') {
       cleanup.push(
-        subscribeMosaicSelection(normalizedFilter.selection, () => {
+        subscribeMosaicSelection(normalizedFilter, () => {
           (async () => {
             try {
               const count = await store.getRowCount(normalizedFilter);

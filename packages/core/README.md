@@ -6,34 +6,35 @@ Framework-agnostic core for AnyTable — type system, layout algorithms, scroll 
 
 ## Stores
 
-The store layer decouples data access from rendering. All stores implement the `TableStore` interface (`getSchema`, `getRowCount`, `fetchRows`) and are lazy about their optional peer dependencies.
+The store layer decouples data access from rendering. All stores implement the `TableStore` interface (`getSchema`, `getRowCount`, `fetchRows`).
 
 ```ts
 import {
-  MosaicDuckDBStore,    // needs @uwdata/mosaic-core, @uwdata/mosaic-sql
-  HyparquetStore, // needs hyparquet
-  JSStore,        // no extra deps
-  portableFilter,
+  MosaicDuckDBStore, // needs @uwdata/mosaic-core, @uwdata/mosaic-sql
+  HyparquetStore,    // needs hyparquet
+  JSStore,           // no extra deps
 } from "@any_table/core";
 ```
 
-- `MosaicDuckDBStore({ coordinator, tableName })` — SQL over a Mosaic coordinator. Accepts `PortableFilter` or Mosaic `Selection`.
+- `MosaicDuckDBStore({ coordinator, tableName })` — SQL over a Mosaic coordinator.
 - `HyparquetStore({ tableName, source: { kind: "url", url } | { kind: "file", file } | { kind: "buffer", buffer } })` — streams row windows from a Parquet file; falls back to an in-memory engine when a filter or sort is set.
 - `JSStore({ tableName, source: { kind: "rows", rows } | { kind: "file", file, format: "json" | "ndjson" | "csv" } })` — plain rows or a local File/Blob.
 
-Filter any store with a `PortableFilter`:
+## Filtering
+
+There is one filter type — a Mosaic `Selection`:
 
 ```ts
-const f = portableFilter({
-  op: "and",
-  clauses: [
-    { op: "contains", column: "name", value: "ada", caseInsensitive: true },
-    { op: "ge", column: "score", value: 80 },
-  ],
-});
+import { Selection, clauseInterval } from "@uwdata/mosaic-core";
+import { column } from "@uwdata/mosaic-sql";
 
-await store.fetchRows({ columns, offset: 0, limit: 50, sort: null, filter: f });
+const sel = Selection.intersect();
+sel.update(clauseInterval(column("score"), [80, 100], { source: "ui" }));
+
+await store.fetchRows({ columns, offset: 0, limit: 50, sort: null, filter: sel });
 ```
+
+`MosaicDuckDBStore` evaluates the predicate as native SQL via DuckDB. `JSStore` and `HyparquetStore` translate the clauses to a JS row predicate via `selectionToPredicate` (also exported). Supported clause shapes: `point`, `interval`, `match` (contains / prefix / suffix / regexp). Anything else is dropped with a `console.warn` — for richer SQL filtering, use `MosaicDuckDBStore`.
 
 ## Install
 

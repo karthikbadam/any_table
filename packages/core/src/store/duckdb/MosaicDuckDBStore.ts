@@ -6,10 +6,8 @@ import { parseValue } from '../../types/parsing';
 import type {
   FetchRowsRequest,
   MosaicSelectionLike,
-  StoreFilter,
   TableStore,
 } from '../TableStore';
-import { filterToMosaicSQL } from '../Filter';
 
 /**
  * Structural shape of a Mosaic Coordinator. Declared here so consumers can
@@ -51,12 +49,10 @@ function loadMosaic() {
  * TableStore backed by a DuckDB-WASM database via a Mosaic Coordinator.
  *
  * Builds SQL with `@uwdata/mosaic-sql`'s Query AST and executes through
- * `coordinator.query()`. Accepts three StoreFilter kinds:
- *   - `portable`   → compiled to a Mosaic-sql WHERE expression.
- *   - `mosaic-selection` → resolved via `selection.predicate(undefined)` and
- *     subscribed for invalidation via `addEventListener('value')`.
- *   - `predicate`  → rejected with a clear error (push into DuckDB as SQL or
- *     switch to an in-memory store).
+ * `coordinator.query()`. The filter (a Mosaic Selection) is resolved via
+ * `selection.predicate(undefined)`, which produces a ready-to-use SQL
+ * expression — DuckDB evaluates it natively, so any Selection clause
+ * shape works (point, interval, match, custom `sql\`…\`` predicates).
  */
 export class MosaicDuckDBStore implements TableStore {
   readonly id = 'mosaic-duckdb';
@@ -88,9 +84,9 @@ export class MosaicDuckDBStore implements TableStore {
     return this.cachedSchema;
   }
 
-  async getRowCount(filter: StoreFilter | null): Promise<number> {
+  async getRowCount(filter: MosaicSelectionLike | null): Promise<number> {
     const { sql } = await loadMosaic();
-    const where = resolveFilterExpr(filter, sql);
+    const where = resolveWhere(filter);
     let q = sql.Query.from(this.tableName).select({ count: sql.count() });
     if (where != null) q = q.where(where);
     const data = await this.coordinator.query(q);
@@ -112,7 +108,7 @@ export class MosaicDuckDBStore implements TableStore {
     }
 
     let q = sql.Query.from(this.tableName).select(select);
-    const where = resolveFilterExpr(req.filter, sql);
+    const where = resolveWhere(req.filter);
     if (where != null) q = q.where(where);
 
     if (req.sort && req.sort.length > 0) {
@@ -140,31 +136,12 @@ export class MosaicDuckDBStore implements TableStore {
   }
 }
 
-function resolveFilterExpr(
-  filter: StoreFilter | null,
-  sql: typeof import('@uwdata/mosaic-sql'),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): any | null {
-  if (!filter) return null;
-  if (filter.kind === 'portable') return filterToMosaicSQL(filter.filter, sql);
-  if (filter.kind === 'mosaic-selection') {
-    return resolveSelectionPredicate(filter.selection);
-  }
-  if (filter.kind === 'predicate') {
-    throw new Error(
-      '[MosaicDuckDBStore] predicate filters are not supported. ' +
-        'Use a PortableFilter, a Mosaic Selection, or switch to JSStore/HyparquetStore.',
-    );
-  }
-  return null;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function resolveSelectionPredicate(selection: MosaicSelectionLike): any | null {
-  if (typeof selection.predicate !== 'function') return null;
+function resolveWhere(filter: MosaicSelectionLike | null): any | null {
+  if (!filter || typeof filter.predicate !== 'function') return null;
   try {
-    const pred = selection.predicate();
-    return pred ?? null;
+    const expr = filter.predicate();
+    return expr ?? null;
   } catch {
     return null;
   }

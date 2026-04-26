@@ -1,18 +1,11 @@
 export type {
   TableStore,
-  StoreFilter,
   FetchRowsRequest,
-  PortableFilter,
-  RowPredicate,
   MosaicSelectionLike,
 } from './TableStore';
-export {
-  portableFilter,
-  predicateFilter,
-  selectionFilter,
-} from './TableStore';
 
-export { compileFilter, filterToMosaicSQL } from './Filter';
+export { selectionToPredicate } from './clauseAdapter';
+export type { RowPredicate } from './clauseAdapter';
 
 export { MemoryEngine } from './memory/MemoryEngine';
 export { makeRowComparator } from './memory/comparators';

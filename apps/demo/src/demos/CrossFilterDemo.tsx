@@ -1,11 +1,15 @@
-import type { ColumnDef, Coordinator, Selection } from "@any_table/react";
+import type { ColumnDef } from "@any_table/core";
 import {
   Table,
   TextCell,
   useMosaicCoordinator,
   useTable,
 } from "@any_table/react";
-import { Selection as MosaicSelection } from "@uwdata/mosaic-core";
+import {
+  Selection as MosaicSelection,
+  type Coordinator,
+  type Selection,
+} from "@uwdata/mosaic-core";
 import { and, literal, sql } from "@uwdata/mosaic-sql";
 import { useEffect, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";

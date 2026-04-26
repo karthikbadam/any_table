@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@any_table/core": "workspace:*",
     "@any_table/react": "workspace:*",
     "@duckdb/duckdb-wasm": "^1.28.0",
     "@uwdata/mosaic-core": "^0.12.0",

@@ -4,8 +4,9 @@ import type {
   Sort,
   StoreFilter,
   TableStore,
-} from "@any_table/react";
-import { Table, portableFilter, useTable } from "@any_table/react";
+} from "@any_table/core";
+import { portableFilter } from "@any_table/core";
+import { Table, useTable } from "@any_table/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { useDatasetLoading } from "../context/DatasetLoadingContext";

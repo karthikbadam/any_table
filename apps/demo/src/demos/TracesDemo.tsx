@@ -1,4 +1,4 @@
-import type { ColumnDef } from "@any_table/react";
+import type { ColumnDef } from "@any_table/core";
 import {
   JsonCell,
   NumberCell,

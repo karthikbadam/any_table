@@ -103,7 +103,7 @@ export function DeclarativeValidationDemo() {
   );
 }`,
 
-  "knowledge-rubrics": `import type { ColumnDef } from "@any_table/react";
+  "knowledge-rubrics": `import type { ColumnDef } from "@any_table/core";
 import { Table, TextCell, useTable } from "@any_table/react";
 import { useRef } from "react";
 
@@ -192,7 +192,7 @@ export function RubricsDemo() {
   );
 }`,
 
-  "swe-bench-traces": `import type { ColumnDef } from "@any_table/react";
+  "swe-bench-traces": `import type { ColumnDef } from "@any_table/core";
 import {
   JsonCell,
   NumberCell,
@@ -313,7 +313,7 @@ export function TracesDemo() {
   );
 }`,
 
-  "custom-cells": `import type { ColumnDef } from "@any_table/react";
+  "custom-cells": `import type { ColumnDef } from "@any_table/core";
 import { Table, useTable } from "@any_table/react";
 import { useRef } from "react";
 
@@ -424,8 +424,9 @@ export function CustomCellsDemo() {
   );
 }`,
 
-  "search": `import type { ColumnDef, Selection } from "@any_table/react";
+  "search": `import type { ColumnDef } from "@any_table/core";
 import { Table, TextCell, useTable } from "@any_table/react";
+import type { Selection } from "@uwdata/mosaic-core";
 import { useEffect, useRef, useState } from "react";
 import { Selection as MosaicSelection } from "@uwdata/mosaic-core";
 
@@ -502,8 +503,9 @@ export function SearchDemo() {
   );
 }`,
 
-  "cross-filtering": `import type { ColumnDef, Selection } from "@any_table/react";
+  "cross-filtering": `import type { ColumnDef } from "@any_table/core";
 import { Table, TextCell, useMosaicCoordinator, useTable } from "@any_table/react";
+import type { Selection } from "@uwdata/mosaic-core";
 import { useEffect, useRef, useState } from "react";
 import {
   MosaicClient,
@@ -604,13 +606,12 @@ export function CrossFilterDemo() {
   MosaicDuckDBStore,
   HyparquetStore,
   JSStore,
-  Table,
   portableFilter,
-  useTable,
   type PortableFilter,
   type Sort,
   type StoreFilter,
-} from "@any_table/react";
+} from "@any_table/core";
+import { Table, useTable } from "@any_table/react";
 
 // One layout shared across all three panels — same data, three stores.
 const columns = [
@@ -684,11 +685,10 @@ export function PlanetsComparisonDemo({ duckCoordinator }) {
   "local-file": `import {
   HyparquetStore,
   JSStore,
-  Table,
-  useTable,
   type ColumnDef,
   type TableStore,
-} from "@any_table/react";
+} from "@any_table/core";
+import { Table, useTable } from "@any_table/react";
 
 // Pick a store based on the file extension; columns are derived from
 // the discovered schema so the table works without a hand-written layout.

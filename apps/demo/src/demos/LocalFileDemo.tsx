@@ -1,5 +1,6 @@
-import type { ColumnDef, TableStore } from "@any_table/react";
-import { HyparquetStore, JSStore, Table, useTable } from "@any_table/react";
+import type { ColumnDef, TableStore } from "@any_table/core";
+import { HyparquetStore, JSStore } from "@any_table/core";
+import { Table, useTable } from "@any_table/react";
 import { useEffect, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { codeExamples } from "./codeExamples";

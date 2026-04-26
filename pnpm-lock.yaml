@@ -17,6 +17,9 @@ importers:
 
   apps/demo:
     dependencies:
+      '@any_table/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@any_table/react':
         specifier: workspace:*
         version: link:../../packages/react

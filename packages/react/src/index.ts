@@ -1,50 +1,11 @@
 // @any_table/react
-
-// Re-export core types
-export type {
-  ColumnDef,
-  ColumnWidth,
-  ColumnSchema,
-  Sort,
-  SortField,
-  TypeCategory,
-  ResolvedColumn,
-  RowHeightConfig,
-  RowRecord,
-} from '@any_table/core';
-
-// Re-export store layer
-export {
-  MosaicDuckDBStore,
-  HyparquetStore,
-  JSStore,
-  MemoryEngine,
-  portableFilter,
-  predicateFilter,
-  selectionFilter,
-  compileFilter,
-  filterToMosaicSQL,
-  inferSchema,
-  parseCSV,
-} from '@any_table/core';
-export type {
-  TableStore,
-  StoreFilter,
-  FetchRowsRequest,
-  PortableFilter,
-  RowPredicate,
-  MosaicSelectionLike,
-  MosaicDuckDBStoreOptions,
-  MosaicCoordinator,
-  HyparquetStoreOptions,
-  ParquetSource,
-  JSSource,
-  JSStoreOptions,
-  CSVParseOptions,
-} from '@any_table/core';
-
-// Re-export Mosaic types for consumer convenience (type-only, no runtime dep)
-export type { Coordinator, Selection, MosaicClient } from '@uwdata/mosaic-core';
+//
+// This package owns the React-shaped surface only: hooks, components,
+// contexts, declarative API. Consumers import store/filter/AST symbols
+// (MosaicDuckDBStore, JSStore, HyparquetStore, ColumnDef, TableStore,
+// MosaicSelectionLike, portableFilter, …) directly from `@any_table/core`.
+// Mosaic primitives (Coordinator, Selection, MosaicClient) come from
+// `@uwdata/mosaic-core`.
 
 // Provider
 export { AnyTableProvider, type AnyTableProviderProps } from './AnyTableProvider';

@@ -3,7 +3,7 @@ import {
   JSStore,
   MosaicDuckDBStore,
   type RowRecord,
-} from "@any_table/react";
+} from "@any_table/core";
 import type { DuckDBHandle } from "./setup-mosaic";
 
 /**

@@ -1,4 +1,5 @@
-import type { RowRecord, TableData } from "@any_table/react";
+import type { RowRecord } from "@any_table/core";
+import type { TableData } from "@any_table/react";
 import { useEffect, useMemo, useRef } from "react";
 
 export interface RecordDialogProps {

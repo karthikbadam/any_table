@@ -1,8 +1,9 @@
-import type { ColumnDef } from "@any_table/core";
+import { MosaicDuckDBStore, type ColumnDef } from "@any_table/core";
 import { Table, TextCell, useTable } from "@any_table/react";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
+import { useDatasetLoading } from "../context/DatasetLoadingContext";
 import { codeExamples } from "./codeExamples";
 
 const columns: ColumnDef[] = [
@@ -48,9 +49,20 @@ function renderRubricCell(
 
 export function RubricsDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { handle } = useDatasetLoading();
+  const store = useMemo(
+    () =>
+      handle?.coordinator
+        ? new MosaicDuckDBStore({
+            coordinator: handle.coordinator,
+            tableName: "open_rubrics",
+          })
+        : undefined,
+    [handle?.coordinator],
+  );
 
   const table = useTable({
-    table: "open_rubrics",
+    store,
     columns,
     rowKey: "instruction",
     containerRef,

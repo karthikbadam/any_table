@@ -1,13 +1,19 @@
+import { MosaicDuckDBStore } from "@any_table/core";
 import { AnyTable, diagnoseConfig, type TableSpec } from "@any_table/react";
 import { useMemo } from "react";
 import { AiFirstBanner } from "../components/AiFirstBanner";
 import { CodeBlock } from "../components/CodeBlock";
 import { DiagnosePanel } from "../components/DiagnosePanel";
+import { useDatasetLoading } from "../context/DatasetLoadingContext";
 import { codeExamples } from "./codeExamples";
 
+// Inline rows / URL-fetched parquet are encoded in the spec.data; backends
+// that need a runtime handle (a DuckDB coordinator here) are passed via the
+// `store` prop on <AnyTable>. We omit `data` from the spec entirely since
+// the backend is supplied externally.
 const spec: TableSpec = {
   $schema: "../../../packages/react/ai/schema.json",
-  data: { table: "open_rubrics" },
+  data: { rows: [] },
   rowKey: "instruction",
   expansion: { expandedRowHeight: 300 },
   height: "62vh",
@@ -29,6 +35,18 @@ const spec: TableSpec = {
 };
 
 export function DeclarativeDemo() {
+  const { handle } = useDatasetLoading();
+  const store = useMemo(
+    () =>
+      handle?.coordinator
+        ? new MosaicDuckDBStore({
+            coordinator: handle.coordinator,
+            tableName: "open_rubrics",
+          })
+        : undefined,
+    [handle?.coordinator],
+  );
+
   const diagnostics = useMemo(() => diagnoseConfig(spec), []);
   const specJson = useMemo(() => JSON.stringify(spec, null, 2), []);
 
@@ -38,6 +56,7 @@ export function DeclarativeDemo() {
 
       <AnyTable
         spec={spec}
+        store={store}
         style={{
           border: "1px solid var(--border)",
           borderRadius: 6,

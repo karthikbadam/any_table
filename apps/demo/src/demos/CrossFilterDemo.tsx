@@ -1,19 +1,15 @@
-import type { ColumnDef } from "@any_table/core";
-import {
-  Table,
-  TextCell,
-  useMosaicCoordinator,
-  useTable,
-} from "@any_table/react";
+import { MosaicDuckDBStore, type ColumnDef } from "@any_table/core";
+import { Table, TextCell, useTable } from "@any_table/react";
 import {
   Selection as MosaicSelection,
   type Coordinator,
   type Selection,
 } from "@uwdata/mosaic-core";
 import { and, literal, sql } from "@uwdata/mosaic-sql";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
+import { useDatasetLoading } from "../context/DatasetLoadingContext";
 import { codeExamples } from "./codeExamples";
 
 // ── Types ───────────────────────────────────────────────────────
@@ -57,6 +53,7 @@ interface FilterBarProps {
   state: FilterState;
   active: string | null;
   onToggle: (value: string) => void;
+  coordinator: Coordinator | null;
   colorMap?: Record<string, string>;
   defaultColor?: string;
 }
@@ -67,10 +64,10 @@ function FilterBar({
   state,
   active,
   onToggle,
+  coordinator,
   colorMap,
   defaultColor = "var(--accent, #3b82f6)",
 }: FilterBarProps) {
-  const coordinator = useMosaicCoordinator();
   const [data, setData] = useState<BarDatum[]>([]);
 
   useEffect(() => {
@@ -88,7 +85,7 @@ function FilterBar({
 
     (async () => {
       try {
-        const result = await (coordinator as Coordinator).query(sqlStr);
+        const result = await coordinator.query(sqlStr);
         if (cancelled) return;
         const rows: BarDatum[] = (result as any).toArray().map((r: any) => ({
           value: String(r.value ?? ""),
@@ -259,6 +256,19 @@ const WINNER_COLORS: Record<string, string> = {
 
 export function CrossFilterDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { handle } = useDatasetLoading();
+  const coordinator = handle?.coordinator ?? null;
+
+  const store = useMemo(
+    () =>
+      coordinator
+        ? new MosaicDuckDBStore({
+            coordinator,
+            tableName: "open_rubrics",
+          })
+        : undefined,
+    [coordinator],
+  );
 
   // React-managed cross-filter state.
   const [filterState, setFilterState] = useState<FilterState>({
@@ -313,7 +323,7 @@ export function CrossFilterDemo() {
   };
 
   const table = useTable({
-    table: "open_rubrics",
+    store,
     columns,
     rowKey: "instruction",
     containerRef,
@@ -356,6 +366,7 @@ export function CrossFilterDemo() {
           state={filterState}
           active={filterState.winner}
           onToggle={handleToggleWinner}
+          coordinator={coordinator}
           colorMap={WINNER_COLORS}
         />
         <FilterBar
@@ -364,6 +375,7 @@ export function CrossFilterDemo() {
           state={filterState}
           active={filterState.source}
           onToggle={handleToggleSource}
+          coordinator={coordinator}
           defaultColor="#06b6d4"
         />
       </div>

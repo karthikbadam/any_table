@@ -1,10 +1,13 @@
 export const codeExamples: Record<string, string> = {
-  "declarative-spec": `import { AnyTable, diagnoseConfig, type TableSpec } from "@any_table/react";
+  "declarative-spec": `import { MosaicDuckDBStore } from "@any_table/core";
+import { AnyTable, diagnoseConfig, type TableSpec } from "@any_table/react";
+import { useMemo } from "react";
 
-// Everything the LLM needs to emit — no JSX render props,
-// no container ref, no \`useTable\` call.
+// The spec is JSON-serializable — what an LLM emits. The runtime DuckDB
+// store is built and passed to <AnyTable> via the \`store\` prop, since a
+// coordinator handle isn't JSON.
 const spec: TableSpec = {
-  data: { table: "open_rubrics" },
+  data: { rows: [] },
   rowKey: "instruction",
   expansion: { expandedRowHeight: 300 },
   height: "62vh",
@@ -20,13 +23,18 @@ const spec: TableSpec = {
   ],
 };
 
-export function DeclarativeDemo() {
-  // Validate once at build or render time; diagnoseConfig never throws.
+export function DeclarativeDemo({ coordinator }) {
+  const store = useMemo(
+    () => new MosaicDuckDBStore({ coordinator, tableName: "open_rubrics" }),
+    [coordinator],
+  );
+
+  // diagnoseConfig never throws.
   const { errors, warnings } = diagnoseConfig(spec);
   if (errors.length) console.error(errors);
   if (warnings.length) console.warn(warnings);
 
-  return <AnyTable spec={spec} />;
+  return <AnyTable spec={spec} store={store} />;
 }`,
 
   "declarative-cells": `import {
@@ -504,8 +512,8 @@ export function SearchDemo() {
 }`,
 
   "cross-filtering": `import type { ColumnDef } from "@any_table/core";
-import { Table, TextCell, useMosaicCoordinator, useTable } from "@any_table/react";
-import type { Selection } from "@uwdata/mosaic-core";
+import { Table, TextCell, useTable } from "@any_table/react";
+import type { Coordinator, Selection } from "@uwdata/mosaic-core";
 import { useEffect, useRef, useState } from "react";
 import {
   MosaicClient,
@@ -514,9 +522,9 @@ import {
 } from "@uwdata/mosaic-core";
 import { Query, column, count, desc } from "@uwdata/mosaic-sql";
 
-// Hook: aggregate query that re-runs when the crossfilter changes
-function useGroupByData(table: string, col: string, filter: Selection) {
-  const coordinator = useMosaicCoordinator();
+// Hook: aggregate query that re-runs when the crossfilter changes.
+// Coordinator is threaded down from the app rather than read from context.
+function useGroupByData(coordinator: Coordinator | null, table: string, col: string, filter: Selection) {
   const [data, setData] = useState<{ value: string; count: number }[]>([]);
 
   useEffect(() => {

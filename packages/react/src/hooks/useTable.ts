@@ -22,8 +22,7 @@ import type { SelectionContextValue } from '../context/SelectionContext';
 // ── Option types ─────────────────────────────────────────────────
 
 export interface UseTableOptions {
-  // Data source (one of table/rows/store required)
-  table?: string;
+  // Data source (one of rows/store required)
   rows?: RowRecord[];
   store?: TableStore;
   columns: ColumnDef[];
@@ -89,7 +88,6 @@ export interface UseTableReturn {
 
 export function useTable(options: UseTableOptions): UseTableReturn {
   const {
-    table,
     rows,
     store,
     columns,
@@ -108,7 +106,6 @@ export function useTable(options: UseTableOptions): UseTableReturn {
 
   // Tier 2: Data
   const data = useTableData({
-    table,
     rows,
     store,
     columns: columnKeys,

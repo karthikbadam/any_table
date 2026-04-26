@@ -11,17 +11,12 @@ import {
   type StoreFilter,
   type TableStore,
 } from "@any_table/core";
-import {
-  useTableStoreRegistry,
-} from "../context/TableStoreContext";
 import type { TableData } from "../context/DataContext";
 
 export interface UseTableDataOptions {
-  /** Registered store name OR a throwaway key for `rows`/`store`. */
-  table?: string;
   /** Inline row data. If provided, routed through an internal JSStore. */
   rows?: RowRecord[];
-  /** Explicit store instance; wins over `table` + `rows`. */
+  /** Explicit store instance; wins over `rows`. */
   store?: TableStore;
   /** Columns to project (order doesn't matter; schema drives rendering). */
   columns: string[];
@@ -67,8 +62,7 @@ function normalizeFilter(
 }
 
 export function useTableData(options: UseTableDataOptions): TableData {
-  const { table, rows, store: storeProp, filter } = options;
-  const registry = useTableStoreRegistry();
+  const { rows, store: storeProp, filter } = options;
 
   const columnsKey = options.columns.join(",");
   const columns = useMemo(() => options.columns, [columnsKey]);
@@ -80,12 +74,12 @@ export function useTableData(options: UseTableDataOptions): TableData {
   if (rows && rows !== rowsRef.current) {
     rowsRef.current = rows;
     jsStoreRef.current = new JSStore({
-      tableName: table ?? 'inline',
+      tableName: 'inline',
       source: { kind: 'rows', rows },
     });
   } else if (rows && !jsStoreRef.current) {
     jsStoreRef.current = new JSStore({
-      tableName: table ?? 'inline',
+      tableName: 'inline',
       source: { kind: 'rows', rows },
     });
   } else if (!rows && jsStoreRef.current) {
@@ -96,17 +90,8 @@ export function useTableData(options: UseTableDataOptions): TableData {
   const store: TableStore | null = useMemo(() => {
     if (storeProp) return storeProp;
     if (rows) return jsStoreRef.current;
-    if (!table) return null;
-    if (registry) {
-      const hit = registry.byTableName[table];
-      if (hit) return hit;
-      const resolved = registry.resolve?.(table);
-      if (resolved && !(resolved as Promise<TableStore>).then) return resolved as TableStore;
-      // Promise-valued factories aren't supported synchronously; callers
-      // that need async factories should pre-register instead.
-    }
     return null;
-  }, [storeProp, rows, table, registry]);
+  }, [storeProp, rows]);
 
   const [version, setVersion] = useState(0);
   const [schema, setSchema] = useState<ColumnSchema[]>([]);

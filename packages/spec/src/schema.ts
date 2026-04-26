@@ -34,26 +34,11 @@ export const ColumnSpecSchema = z
 
 const RowRecordSchema = z.record(z.string(), z.unknown());
 
-const DataRefSchema = z.object({ ref: z.string().min(1) }).strict();
-
-const ParquetSourceSchema = z.union([
-  z.object({ url: z.string().min(1) }).strict(),
-  DataRefSchema,
-]);
-
-const FileSourceSchema = z
-  .object({
-    ref: z.string().min(1),
-    format: z.enum(['json', 'ndjson', 'csv']),
-  })
-  .strict();
+const ParquetSourceSchema = z.object({ url: z.string().min(1) }).strict();
 
 export const TableDataSourceSchema = z.union([
-  z.object({ table: z.string().min(1) }).strict(),
   z.object({ rows: z.array(RowRecordSchema) }).strict(),
   z.object({ parquet: ParquetSourceSchema }).strict(),
-  z.object({ file: FileSourceSchema }).strict(),
-  z.object({ store: DataRefSchema }).strict(),
 ]);
 
 export const ExpansionSpecSchema = z.union([

@@ -1,11 +1,12 @@
-import type { ColumnDef } from "@any_table/core";
+import { MosaicDuckDBStore, type ColumnDef } from "@any_table/core";
 import { Table, TextCell, useTable } from "@any_table/react";
 import {
   Selection as MosaicSelection,
   type Selection,
 } from "@uwdata/mosaic-core";
 import { literal, or, sql } from "@uwdata/mosaic-sql";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDatasetLoading } from "../context/DatasetLoadingContext";
 import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
@@ -187,6 +188,20 @@ function renderSearchCell(
 
 export function SearchDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { handle } = useDatasetLoading();
+
+  // Construct the MosaicDuckDBStore once the coordinator is ready. The
+  // DemoLoader gates rendering until the open_rubrics dataset is loaded.
+  const store = useMemo(
+    () =>
+      handle?.coordinator
+        ? new MosaicDuckDBStore({
+            coordinator: handle.coordinator,
+            tableName: "open_rubrics",
+          })
+        : undefined,
+    [handle?.coordinator],
+  );
 
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<SearchMode>("contains");
@@ -217,7 +232,7 @@ export function SearchDemo() {
   }, [debouncedQuery, mode, column, filterSelection]);
 
   const table = useTable({
-    table: "open_rubrics",
+    store,
     columns,
     rowKey: "instruction",
     containerRef,

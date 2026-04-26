@@ -1,4 +1,4 @@
-import type { ColumnDef } from "@any_table/core";
+import { MosaicDuckDBStore, type ColumnDef } from "@any_table/core";
 import {
   JsonCell,
   NumberCell,
@@ -6,10 +6,11 @@ import {
   TextCell,
   useTable,
 } from "@any_table/react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CodeBlock } from "../components/CodeBlock";
 import { RecordDialog } from "../components/RecordDialog";
 import { StatsBar } from "../components/StatsBar";
+import { useDatasetLoading } from "../context/DatasetLoadingContext";
 import { codeExamples } from "./codeExamples";
 
 const EMPTY_KEYS = new Set<string>();
@@ -61,9 +62,20 @@ function renderTraceCell(
 export function TracesDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { handle } = useDatasetLoading();
+  const store = useMemo(
+    () =>
+      handle?.coordinator
+        ? new MosaicDuckDBStore({
+            coordinator: handle.coordinator,
+            tableName: "swe_bench",
+          })
+        : undefined,
+    [handle?.coordinator],
+  );
 
   const table = useTable({
-    table: "swe_bench",
+    store,
     columns,
     rowKey: "id",
     containerRef,

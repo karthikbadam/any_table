@@ -1,4 +1,3 @@
-import { AnyTableProvider } from "@any_table/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DemoLoader } from "./components/DemoLoader";
 import { NavPanel } from "./components/NavPanel";
@@ -76,8 +75,7 @@ export default function App() {
                       : RubricsDemo;
 
   return (
-    <AnyTableProvider coordinator={handle?.coordinator ?? undefined}>
-      <DatasetLoadingProvider handle={handle}>
+    <DatasetLoadingProvider handle={handle}>
         <div className="mobile-header">
           <button
             type="button"
@@ -112,6 +110,5 @@ export default function App() {
           </main>
         </div>
       </DatasetLoadingProvider>
-    </AnyTableProvider>
   );
 }

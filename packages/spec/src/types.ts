@@ -48,24 +48,16 @@ export interface ColumnSpec {
 }
 
 /**
- * Reference to a resource registered on the enclosing provider — used when
- * the payload (a `File` / `Blob`) can't be encoded in JSON.
+ * Inline / URL-resolvable data sources only. For backends that need a runtime
+ * handle (a DuckDB coordinator, a File/Blob, an explicit TableStore), pass
+ * the constructed store via `<AnyTable store={...} />` instead of encoding
+ * it in the spec — those payloads aren't JSON and don't belong in a spec.
  */
-export interface DataRef {
-  ref: string;
-}
-
 export type TableDataSource =
-  // Named table resolved via the AnyTableProvider registry (DuckDB, etc.).
-  | { table: string }
   // Inline rows — handled by an internal JSStore.
   | { rows: RowRecord[] }
-  // Parquet file via hyparquet — either a URL or a provider-registered file.
-  | { parquet: { url: string } | DataRef }
-  // File-based JS source (parsed in the browser).
-  | { file: DataRef & { format: 'json' | 'ndjson' | 'csv' } }
-  // Arbitrary store registered on the provider under this ref.
-  | { store: DataRef };
+  // Parquet file via hyparquet, fetched from a URL.
+  | { parquet: { url: string } };
 
 export interface ExpansionSpec {
   expandedRowHeight?: number;

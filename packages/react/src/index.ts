@@ -7,16 +7,7 @@
 // Mosaic primitives (Coordinator, Selection, MosaicClient) come from
 // `@uwdata/mosaic-core`.
 
-// Provider
-export { AnyTableProvider, type AnyTableProviderProps } from './AnyTableProvider';
-
-// Contexts
-export { useMosaicCoordinator } from './context/MosaicContext';
-export {
-  useTableStore,
-  useTableStoreRegistry,
-  type TableStoreRegistry,
-} from './context/TableStoreContext';
+// Contexts (internal table-rendering contexts only)
 export { useDataContext, type TableData } from './context/DataContext';
 export { useLayoutContext, type ColumnLayout } from './context/LayoutContext';
 export { useScrollContext, type TableScroll } from './context/ScrollContext';

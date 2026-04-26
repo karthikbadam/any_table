@@ -1,12 +1,10 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import {
   HyparquetStore,
-  JSStore,
   type ColumnDef,
   type TableStore,
 } from '@any_table/core';
 import { useTable } from '../hooks/useTable';
-import { useTableStoreRegistry } from '../context/TableStoreContext';
 import { TableRoot } from '../components/TableRoot';
 import { TableHeader } from '../components/TableHeader';
 import { TableHeaderCell } from '../components/TableHeaderCell';
@@ -46,7 +44,7 @@ function toSelectionOption(spec: TableSpec['selection']) {
 }
 
 export function AnyTable(props: AnyTableProps) {
-  const { spec, filter, onSortChange, containerRef: containerRefProp, className, style, children } = props;
+  const { spec, store: storeProp, filter, onSortChange, containerRef: containerRefProp, className, style, children } = props;
 
   const internalRef = useRef<HTMLElement | null>(null);
   const containerRef = containerRefProp ?? internalRef;
@@ -56,59 +54,23 @@ export function AnyTable(props: AnyTableProps) {
     [spec.columns],
   );
 
-  const registry = useTableStoreRegistry();
+  // Resolve a store from spec.data (parquet by URL only) when no explicit
+  // `store` prop was supplied. Inline rows go through useTable's own JSStore.
   const derivedStore = useMemo<TableStore | undefined>(() => {
-    const d = spec.data as Record<string, unknown>;
+    if (storeProp) return undefined;
+    const d = spec.data;
     if ('parquet' in d) {
-      const p = d.parquet as { url?: string; ref?: string };
-      if (p.url) {
-        return new HyparquetStore({
-          tableName: spec.rowKey || 'parquet',
-          source: { kind: 'url', url: p.url },
-        });
-      }
-      if (p.ref) {
-        const resource = registry?.resources?.[p.ref];
-        if (resource instanceof Blob) {
-          return new HyparquetStore({
-            tableName: spec.rowKey || 'parquet',
-            source: { kind: 'file', file: resource },
-          });
-        }
-        if (resource instanceof ArrayBuffer) {
-          return new HyparquetStore({
-            tableName: spec.rowKey || 'parquet',
-            source: { kind: 'buffer', buffer: resource },
-          });
-        }
-        console.error(`[AnyTable] parquet ref "${p.ref}" not registered on provider`);
-      }
-    } else if ('file' in d) {
-      const f = d.file as { ref: string; format: 'json' | 'ndjson' | 'csv' };
-      const resource = registry?.resources?.[f.ref];
-      if (resource instanceof Blob) {
-        return new JSStore({
-          tableName: spec.rowKey || 'file',
-          source: { kind: 'file', file: resource, format: f.format },
-        });
-      }
-      console.error(`[AnyTable] file ref "${f.ref}" not registered on provider`);
-    } else if ('store' in d) {
-      const s = d.store as { ref: string };
-      const resource = registry?.resources?.[s.ref];
-      if (resource && typeof resource === 'object' && 'fetchRows' in (resource as object)) {
-        return resource as TableStore;
-      }
-      console.error(`[AnyTable] store ref "${s.ref}" not registered on provider`);
+      return new HyparquetStore({
+        tableName: spec.rowKey || 'parquet',
+        source: { kind: 'url', url: d.parquet.url },
+      });
     }
     return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.data, spec.rowKey, registry]);
+  }, [storeProp, spec.data, spec.rowKey]);
 
   const table = useTable({
-    table: 'table' in spec.data ? spec.data.table : undefined,
     rows: 'rows' in spec.data ? spec.data.rows : undefined,
-    store: derivedStore,
+    store: storeProp ?? derivedStore,
     columns,
     rowKey: spec.rowKey,
     filter,

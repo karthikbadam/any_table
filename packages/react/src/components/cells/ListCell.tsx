@@ -40,6 +40,9 @@ export function ListCell({ value, isExpanded, onToggleExpand, className, style }
           overflow: 'auto',
           fontSize: '0.8rem',
           lineHeight: 1.6,
+          color: 'var(--fg)',
+          padding: '8px 12px',
+          width: '100%',
           cursor: onToggleExpand ? 'pointer' : undefined,
           ...style,
         }}
@@ -77,6 +80,11 @@ export function ListCell({ value, isExpanded, onToggleExpand, className, style }
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        fontSize: '0.8rem',
+        lineHeight: 1.5,
+        color: 'var(--fg)',
+        padding: '8px 12px',
+        width: '100%',
         cursor: onToggleExpand ? 'pointer' : undefined,
         ...style,
       }}

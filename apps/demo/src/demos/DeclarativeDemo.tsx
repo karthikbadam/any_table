@@ -36,14 +36,7 @@ export function DeclarativeDemo() {
     <div className="demo-content">
       <AiFirstBanner />
 
-      <AnyTable
-        spec={spec}
-        style={{
-          border: "1px solid var(--border)",
-          borderRadius: 6,
-          background: "var(--surface)",
-        }}
-      />
+      <AnyTable spec={spec} />
 
       <DiagnosePanel diagnostics={diagnostics} />
 

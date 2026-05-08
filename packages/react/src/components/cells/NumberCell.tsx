@@ -28,6 +28,10 @@ export function NumberCell({ value, className, style }: NumberCellProps) {
         textAlign: 'right',
         width: '100%',
         fontVariantNumeric: 'tabular-nums',
+        padding: '8px 12px',
+        fontSize: '0.8rem',
+        lineHeight: 1.5,
+        color: 'var(--fg)',
         ...style,
       }}
     >

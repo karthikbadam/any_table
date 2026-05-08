@@ -228,33 +228,14 @@ export function CustomCellsDemo() {
           width: "100%",
           height: "62vh",
           position: "relative",
-          border: "1px solid var(--border)",
-          borderRadius: 6,
-          background: "var(--surface)",
           overflow: "hidden",
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header
-            style={{
-              padding: "8px",
-              background: "var(--surface)",
-              borderBottom: "1px solid var(--border)",
-            }}
-          >
+          <Table.Header style={{ minHeight: "2.5rem" }}>
             {({ columns: cols }) =>
               cols.map((col) => (
-                <Table.HeaderCell
-                  key={col.key}
-                  column={col.key}
-                  style={{
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    color: "var(--muted-fg)",
-                  }}
-                >
+                <Table.HeaderCell key={col.key} column={col.key}>
                   <Table.SortTrigger column={col.key}>
                     {col.key.replace(/_/g, " ")}
                   </Table.SortTrigger>
@@ -266,13 +247,7 @@ export function CustomCellsDemo() {
           <Table.Viewport>
             {({ rows: visibleRows }) =>
               visibleRows.map((row) => (
-                <Table.Row
-                  key={row.key}
-                  row={row}
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                  }}
-                >
+                <Table.Row key={row.key} row={row}>
                   {({ cells }) =>
                     cells.map((cell) => (
                       <Table.Cell
@@ -282,8 +257,6 @@ export function CustomCellsDemo() {
                         offset={cell.offset}
                         style={{
                           padding: "8px 12px",
-                          fontSize: "0.8rem",
-                          lineHeight: "1.5",
                           color: "var(--fg)",
                           display: "flex",
                           alignItems: "center",

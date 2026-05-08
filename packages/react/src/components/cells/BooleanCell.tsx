@@ -17,6 +17,11 @@ export function BooleanCell({ value, className, style }: BooleanCellProps) {
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
+        alignItems: 'center',
+        padding: '8px 12px',
+        fontSize: '0.8rem',
+        lineHeight: 1.5,
+        color: 'var(--fg)',
         ...style,
       }}
     >

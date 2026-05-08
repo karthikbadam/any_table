@@ -81,8 +81,8 @@ export function AnyTable(props: AnyTableProps) {
   const containerStyle: React.CSSProperties = {
     position: 'relative',
     width: spec.width ?? '100%',
-    height: spec.height ?? '60vh',
     overflow: 'hidden',
+    ...(spec.height !== undefined ? { height: spec.height } : null),
     ...style,
   };
 
@@ -90,16 +90,11 @@ export function AnyTable(props: AnyTableProps) {
     <div ref={containerRef as React.RefObject<HTMLDivElement>} className={className} style={containerStyle} data-any-table-theme={spec.theme}>
       <TableRoot {...table.rootProps}>
         <TableHeader
-          style={{
-            // Give the header an explicit height. TableHeaderCell is absolutely
-            // positioned, so without this the parent collapses to 0 and the
-            // header is invisible. 2.5rem matches the default row feel.
-            height: '2.5rem',
-            padding: '0 4px',
-            background: 'var(--surface, #fff)',
-            borderBottom: '1px solid var(--border, #e5e7eb)',
-            flex: '0 0 auto',
-          }}
+          // The single retained layout default: TableHeaderCell is absolutely
+          // positioned with height: 100%, so without a header height the strip
+          // collapses to zero. Everything else (background, border, typography)
+          // is consumer CSS.
+          style={{ minHeight: '2.5rem' }}
         >
           {({ columns: cols }) =>
             cols.map((col) => {
@@ -107,18 +102,7 @@ export function AnyTable(props: AnyTableProps) {
               const label = colSpec?.label ?? defaultLabel(col.key);
               const sortable = colSpec?.sortable ?? true;
               return (
-                <TableHeaderCell
-                  key={col.key}
-                  column={col.key}
-                  style={{
-                    padding: '0 8px',
-                    fontWeight: 600,
-                    fontSize: '0.72rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    color: 'var(--muted-fg, #6b7280)',
-                  }}
-                >
+                <TableHeaderCell key={col.key} column={col.key}>
                   {sortable ? (
                     <SortTrigger column={col.key}>{label}</SortTrigger>
                   ) : (
@@ -133,13 +117,7 @@ export function AnyTable(props: AnyTableProps) {
         <TableViewport>
           {({ rows }) =>
             rows.map((row) => (
-              <TableRow
-                key={row.key}
-                row={row}
-                style={{
-                  borderBottom: '1px solid var(--border, #e5e7eb)',
-                }}
-              >
+              <TableRow key={row.key} row={row}>
                 {({ cells }) =>
                   cells.map((cell) => {
                     const colSpec = columnByKey.get(cell.column);
@@ -159,10 +137,6 @@ export function AnyTable(props: AnyTableProps) {
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: justify,
-                          padding: '8px 12px',
-                          fontSize: '0.8rem',
-                          lineHeight: 1.5,
-                          color: 'var(--fg)',
                           cursor: cell.onToggleExpand ? 'pointer' : 'default',
                         }}
                       >

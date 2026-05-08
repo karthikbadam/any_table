@@ -24,6 +24,11 @@ export function TextCell({ value, isExpanded, onToggleExpand, className, style }
           overflow: 'auto',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
+          padding: '8px 12px',
+          fontSize: '0.8rem',
+          lineHeight: 1.5,
+          color: 'var(--fg)',
+          width: '100%',
           cursor: onToggleExpand ? 'pointer' : undefined,
           ...style,
         }}
@@ -44,6 +49,11 @@ export function TextCell({ value, isExpanded, onToggleExpand, className, style }
         WebkitLineClamp: 3,
         WebkitBoxOrient: 'vertical',
         textOverflow: 'ellipsis',
+        padding: '8px 12px',
+        fontSize: '0.8rem',
+        lineHeight: 1.5,
+        color: 'var(--fg)',
+        width: '100%',
         cursor: onToggleExpand ? 'pointer' : undefined,
         ...style,
       }}

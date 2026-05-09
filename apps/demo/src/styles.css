@@ -113,12 +113,11 @@ body {
 [role="grid"] > [role="rowgroup"]:first-of-type {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 4px;
 }
 
 [role="columnheader"] {
   user-select: none;
-  padding: 0 8px;
+  padding: 0 12px;
   font-weight: 600;
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -136,6 +135,13 @@ body {
 
 [role="row"] {
   border-bottom: 1px solid var(--border);
+}
+
+[role="gridcell"] {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--fg);
 }
 
 /* ── Loading status spinner ── */

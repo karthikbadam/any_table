@@ -5,7 +5,7 @@ import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
 
-// ── Synthetic data ──────────────────────────────────────────────
+// ── Synthetic data ──────────────────────────────────
 
 function makeTrend(base: number, volatility: number, length = 20): number[] {
   const points: number[] = [base];
@@ -31,7 +31,7 @@ const rows = [
   { id: "queue", name: "Queue Depth", category: "traffic", trend: makeTrend(15, 8), current: 12, change: -20.0, active: true },
 ];
 
-// ── Custom cell renderers ───────────────────────────────────────
+// ── Custom cell renderers ──────────────────────────────
 
 const CATEGORY_COLORS: Record<string, string> = {
   compute: "#3b82f6",
@@ -123,7 +123,7 @@ function SparklineCell({ data, width }: { data: number[]; width: number }) {
 function ChangeCell({ value }: { value: number }) {
   const positive = value >= 0;
   const color = positive ? "var(--good-fg, #22c55e)" : "var(--bad-fg, #ef4444)";
-  const arrow = positive ? "\u2191" : "\u2193";
+  const arrow = positive ? "↑" : "↓";
 
   return (
     <span style={{ color, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
@@ -157,7 +157,7 @@ function StatusCell({ value }: { value: boolean }) {
   );
 }
 
-// ── Column definitions ──────────────────────────────────────────
+// ── Column definitions ─────────────────────────────────
 
 const columns: ColumnDef[] = [
   { key: "name", flex: 1, minWidth: "9rem" },
@@ -207,7 +207,7 @@ function renderCustomCell(
   }
 }
 
-// ── Demo component ──────────────────────────────────────────────
+// ── Demo component ───────────────────────────────────
 
 export function CustomCellsDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -256,8 +256,6 @@ export function CustomCellsDemo() {
                         width={cell.width}
                         offset={cell.offset}
                         style={{
-                          padding: "8px 12px",
-                          color: "var(--fg)",
                           display: "flex",
                           alignItems: "center",
                         }}

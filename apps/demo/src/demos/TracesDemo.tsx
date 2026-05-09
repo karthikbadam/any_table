@@ -139,6 +139,8 @@ export function TracesDemo() {
                             cell.column === "__select"
                               ? "center"
                               : "flex-start",
+                          padding:
+                            cell.column === "__select" ? 0 : undefined,
                           cursor:
                             cell.column === "__select"
                               ? "default"

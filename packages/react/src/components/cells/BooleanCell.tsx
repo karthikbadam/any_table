@@ -18,10 +18,6 @@ export function BooleanCell({ value, className, style }: BooleanCellProps) {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '8px 12px',
-        fontSize: '0.8rem',
-        lineHeight: 1.5,
-        color: 'var(--fg)',
         ...style,
       }}
     >

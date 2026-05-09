@@ -27,10 +27,6 @@ export function DateCell({ value, className, style }: DateCellProps) {
       className={className}
       style={{
         textAlign: 'left',
-        padding: '8px 12px',
-        fontSize: '0.8rem',
-        lineHeight: 1.5,
-        color: 'var(--fg)',
         width: '100%',
         ...style,
       }}

@@ -19,6 +19,7 @@ export function TableHeader({ children, className, style }: TableHeaderProps) {
         position: 'sticky',
         top: 0,
         zIndex: 2,
+        flex: '0 0 auto',
         overflow: 'hidden',
         width: layout.totalWidth,
         ...style,

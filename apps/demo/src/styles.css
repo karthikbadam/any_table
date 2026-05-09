@@ -51,12 +51,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1117;
+    --bg: #1c2129;
     --fg: #e6edf6;
     --muted-fg: #9aa8bb;
-    --surface: #161b22;
-    --surface-2: #1c2129;
-    --surface-3: #242b35;
+    --surface: #0a0d12;
+    --surface-2: #14181f;
+    --surface-3: #1c2129;
     --border: #2d3640;
     --border-strong: #445469;
     --accent: #7db7ff;

@@ -91,7 +91,7 @@ export function TracesDemo() {
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header style={{ height: "2.5rem" }}>
+          <Table.Header>
             {({ columns: cols }) =>
               cols.map((col) => (
                 <Table.HeaderCell

@@ -232,7 +232,7 @@ export function CustomCellsDemo() {
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header style={{ height: "2.5rem" }}>
+          <Table.Header>
             {({ columns: cols }) =>
               cols.map((col) => (
                 <Table.HeaderCell key={col.key} column={col.key}>

@@ -91,10 +91,12 @@ export function AnyTable(props: AnyTableProps) {
       <TableRoot {...table.rootProps}>
         <TableHeader
           // The single retained layout default: TableHeaderCell is absolutely
-          // positioned with height: 100%, so without a header height the strip
-          // collapses to zero. Everything else (background, border, typography)
-          // is consumer CSS.
-          style={{ minHeight: '2.5rem' }}
+          // positioned with height: 100%, which resolves against the parent's
+          // explicit height (not min-height). Without an explicit height here,
+          // header cells collapse to 0 and their text gets clipped by the
+          // sticky strip's overflow: hidden. Everything else (background,
+          // border, typography) is consumer CSS.
+          style={{ height: '2.5rem' }}
         >
           {({ columns: cols }) =>
             cols.map((col) => {

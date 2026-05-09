@@ -7,7 +7,7 @@ import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
 
-// ── Search modes ────────────────────────────────────────────────
+// ── Search modes ───────────────────────────────────
 
 type SearchMode = "contains" | "exact" | "regex";
 
@@ -53,7 +53,7 @@ function buildPredicate(
   return or(...(parts as any[]));
 }
 
-// ── Search toolbar ──────────────────────────────────────────────
+// ── Search toolbar ──────────────────────────────────
 
 interface SearchToolbarProps {
   query: string;
@@ -137,7 +137,7 @@ function SearchToolbar({
   );
 }
 
-// ── Columns ─────────────────────────────────────────────────────
+// ── Columns ────────────────────────────────────────
 
 const columns: ColumnDef[] = [
   { key: "source", width: "6rem" },
@@ -180,7 +180,7 @@ function renderSearchCell(
   return str;
 }
 
-// ── Demo component ──────────────────────────────────────────────
+// ── Demo component ───────────────────────────────────
 
 export function SearchDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -243,7 +243,7 @@ export function SearchDemo() {
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header style={{ minHeight: "2.5rem" }}>
+          <Table.Header style={{ height: "2.5rem" }}>
             {({ columns: cols }) =>
               cols.map((col) => (
                 <Table.HeaderCell key={col.key} column={col.key}>

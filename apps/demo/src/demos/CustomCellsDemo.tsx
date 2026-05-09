@@ -157,7 +157,7 @@ function StatusCell({ value }: { value: boolean }) {
   );
 }
 
-// ── Column definitions ─────────────────────────────────
+// ── Column definitions ────────────────────────────────
 
 const columns: ColumnDef[] = [
   { key: "name", flex: 1, minWidth: "9rem" },
@@ -232,7 +232,7 @@ export function CustomCellsDemo() {
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header style={{ minHeight: "2.5rem" }}>
+          <Table.Header style={{ height: "2.5rem" }}>
             {({ columns: cols }) =>
               cols.map((col) => (
                 <Table.HeaderCell key={col.key} column={col.key}>

@@ -70,7 +70,7 @@ export function RubricsDemo() {
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header style={{ minHeight: "2.5rem" }}>
+          <Table.Header style={{ height: "2.5rem" }}>
             {({ columns: cols }) =>
               cols.map((col) => (
                 <Table.HeaderCell key={col.key} column={col.key}>

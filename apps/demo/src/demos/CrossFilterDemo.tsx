@@ -12,7 +12,7 @@ import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
 
-// ── Types ───────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────
 
 interface BarDatum {
   value: string;
@@ -24,7 +24,7 @@ interface FilterState {
   source: string | null;
 }
 
-// ── SQL helpers ─────────────────────────────────────────────────
+// ── SQL helpers ────────────────────────────────────
 
 function escapeSqlString(s: string): string {
   return s.replace(/'/g, "''");
@@ -200,7 +200,7 @@ function FilterBar({
   );
 }
 
-// ── Table columns ───────────────────────────────────────────────
+// ── Table columns ───────────────────────────────────
 
 const columns: ColumnDef[] = [
   { key: "source", width: "6rem" },
@@ -243,7 +243,7 @@ function renderCell(
   return str;
 }
 
-// ── Winner colors ───────────────────────────────────────────────
+// ── Winner colors ───────────────────────────────────
 
 const WINNER_COLORS: Record<string, string> = {
   A: "#3b82f6",
@@ -251,7 +251,7 @@ const WINNER_COLORS: Record<string, string> = {
   tie: "#a78bfa",
 };
 
-// ── Demo component ──────────────────────────────────────────────
+// ── Demo component ───────────────────────────────────
 
 export function CrossFilterDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -357,7 +357,7 @@ export function CrossFilterDemo() {
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header style={{ minHeight: "2.5rem" }}>
+          <Table.Header style={{ height: "2.5rem" }}>
             {({ columns: cols }) =>
               cols.map((col) => (
                 <Table.HeaderCell key={col.key} column={col.key}>

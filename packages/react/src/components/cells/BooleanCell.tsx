@@ -17,6 +17,7 @@ export function BooleanCell({ value, className, style }: BooleanCellProps) {
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
+        alignItems: 'center',
         ...style,
       }}
     >

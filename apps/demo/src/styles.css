@@ -6,11 +6,11 @@
 
 :root {
   color-scheme: light dark;
-  --bg: #f7f8fa;
+  --bg: #ffffff;
   --fg: #14171c;
   --muted-fg: #5b6470;
   --surface: #ffffff;
-  --surface-2: #f3f5f7;
+  --surface-2: #ffffff;
   --surface-3: #eef1f4;
   --border: #d8dee7;
   --border-strong: #c2cbd6;
@@ -51,11 +51,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1c2129;
+    --bg: #0a0d12;
     --fg: #e6edf6;
     --muted-fg: #9aa8bb;
     --surface: #0a0d12;
-    --surface-2: #14181f;
+    --surface-2: #0a0d12;
     --surface-3: #1c2129;
     --border: #2d3640;
     --border-strong: #445469;
@@ -109,8 +109,20 @@ body {
   background: var(--surface);
 }
 
+/* Header strip: the first rowgroup inside any AnyTable grid. */
+[role="grid"] > [role="rowgroup"]:first-of-type {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
 [role="columnheader"] {
   user-select: none;
+  padding: 0 12px;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-fg);
 }
 
 [role="columnheader"] button {
@@ -119,6 +131,17 @@ body {
 
 [role="columnheader"] button:hover {
   color: var(--accent);
+}
+
+[role="row"] {
+  border-bottom: 1px solid var(--border);
+}
+
+[role="gridcell"] {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--fg);
 }
 
 /* ── Loading status spinner ── */

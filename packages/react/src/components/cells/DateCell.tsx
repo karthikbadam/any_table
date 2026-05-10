@@ -25,7 +25,11 @@ export function DateCell({ value, className, style }: DateCellProps) {
   return (
     <span
       className={className}
-      style={{ textAlign: 'left', ...style }}
+      style={{
+        textAlign: 'left',
+        width: '100%',
+        ...style,
+      }}
     >
       {display}
     </span>

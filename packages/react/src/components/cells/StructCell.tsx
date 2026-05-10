@@ -38,7 +38,15 @@ export function StructCell({ value, isExpanded, onToggleExpand, className, style
 
   if (record == null) {
     return (
-      <span className={className} style={{ textAlign: 'left', color: 'var(--muted-fg)', ...style }}>
+      <span
+        className={className}
+        style={{
+          textAlign: 'left',
+          color: 'var(--muted-fg)',
+          width: '100%',
+          ...style,
+        }}
+      >
         {value == null ? '' : String(value)}
       </span>
     );
@@ -53,8 +61,7 @@ export function StructCell({ value, isExpanded, onToggleExpand, className, style
         style={{
           textAlign: 'left',
           overflow: 'auto',
-          fontSize: '0.8rem',
-          lineHeight: 1.6,
+          width: '100%',
           cursor: onToggleExpand ? 'pointer' : undefined,
           ...style,
         }}
@@ -88,6 +95,7 @@ export function StructCell({ value, isExpanded, onToggleExpand, className, style
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        width: '100%',
         cursor: onToggleExpand ? 'pointer' : undefined,
         ...style,
       }}

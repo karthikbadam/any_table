@@ -86,38 +86,23 @@ export function TracesDemo() {
         style={{
           width: "100%",
           height: "62vh",
-          position: "relative",
           border: "1px solid var(--border)",
-          borderRadius: 6,
-          background: "var(--surface)",
+          position: "relative",
           overflow: "hidden",
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header
-            style={{
-              padding: "8px 0",
-              background: "var(--surface)",
-              borderBottom: "1px solid var(--border)",
-            }}
-          >
+          <Table.Header>
             {({ columns: cols }) =>
               cols.map((col) => (
                 <Table.HeaderCell
                   key={col.key}
                   column={col.key}
-                  style={{
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    color: "var(--muted-fg)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent:
-                      col.key === "__select" ? "center" : "flex-start",
-                    padding: col.key === "__select" ? "0" : "0 12px",
-                  }}
+                  style={
+                    col.key === "__select"
+                      ? { padding: 0, justifyContent: "center" }
+                      : undefined
+                  }
                 >
                   {col.key === "__select" ? null : (
                     <Table.SortTrigger column={col.key}>
@@ -132,13 +117,7 @@ export function TracesDemo() {
           <Table.Viewport>
             {({ rows }) =>
               rows.map((row) => (
-                <Table.Row
-                  key={row.key}
-                  row={row}
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                  }}
-                >
+                <Table.Row key={row.key} row={row}>
                   {({ cells }) =>
                     cells.map((cell) => (
                       <Table.Cell
@@ -152,11 +131,6 @@ export function TracesDemo() {
                             : () => cell.onToggleExpand?.()
                         }
                         style={{
-                          padding:
-                            cell.column === "__select" ? "0" : "8px 12px",
-                          fontSize: "0.8rem",
-                          lineHeight: "1.5",
-                          color: "var(--fg)",
                           display: "flex",
                           alignItems:
                             cell.column === "__select"
@@ -166,8 +140,13 @@ export function TracesDemo() {
                             cell.column === "__select"
                               ? "center"
                               : "flex-start",
+                          padding: cell.column === "__select" ? 0 : undefined,
                           cursor:
-                            cell.column === "__select" ? "default" : "pointer",
+                            cell.column === "__select"
+                              ? "default"
+                              : cell.onToggleExpand
+                                ? "pointer"
+                                : "default",
                         }}
                       >
                         {cell.column === "__select" ? (

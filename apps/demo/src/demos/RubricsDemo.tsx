@@ -65,34 +65,16 @@ export function RubricsDemo() {
         style={{
           width: "100%",
           height: "62vh",
-          position: "relative",
           border: "1px solid var(--border)",
-          borderRadius: 6,
-          background: "var(--surface)",
+          position: "relative",
           overflow: "hidden",
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header
-            style={{
-              padding: "8px",
-              background: "var(--surface)",
-              borderBottom: "1px solid var(--border)",
-            }}
-          >
+          <Table.Header>
             {({ columns: cols }) =>
               cols.map((col) => (
-                <Table.HeaderCell
-                  key={col.key}
-                  column={col.key}
-                  style={{
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    color: "var(--muted-fg)",
-                  }}
-                >
+                <Table.HeaderCell key={col.key} column={col.key}>
                   <Table.SortTrigger column={col.key}>
                     {col.key.replace(/_/g, " ")}
                   </Table.SortTrigger>
@@ -104,13 +86,7 @@ export function RubricsDemo() {
           <Table.Viewport>
             {({ rows }) =>
               rows.map((row) => (
-                <Table.Row
-                  key={row.key}
-                  row={row}
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                  }}
-                >
+                <Table.Row key={row.key} row={row}>
                   {({ cells }) =>
                     cells.map((cell) => (
                       <Table.Cell
@@ -120,11 +96,9 @@ export function RubricsDemo() {
                         offset={cell.offset}
                         onClick={() => cell.onToggleExpand?.()}
                         style={{
-                          padding: "8px 12px",
-                          fontSize: "0.8rem",
-                          lineHeight: "1.5",
-                          color: "var(--fg)",
-                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "flex-start",
+                          cursor: cell.onToggleExpand ? "pointer" : "default",
                         }}
                       >
                         {renderRubricCell(

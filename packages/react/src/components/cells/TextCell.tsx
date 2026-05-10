@@ -24,6 +24,7 @@ export function TextCell({ value, isExpanded, onToggleExpand, className, style }
           overflow: 'auto',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
+          width: '100%',
           cursor: onToggleExpand ? 'pointer' : undefined,
           ...style,
         }}
@@ -44,6 +45,7 @@ export function TextCell({ value, isExpanded, onToggleExpand, className, style }
         WebkitLineClamp: 3,
         WebkitBoxOrient: 'vertical',
         textOverflow: 'ellipsis',
+        width: '100%',
         cursor: onToggleExpand ? 'pointer' : undefined,
         ...style,
       }}

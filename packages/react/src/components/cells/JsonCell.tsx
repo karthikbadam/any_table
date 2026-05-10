@@ -116,9 +116,8 @@ export function JsonCell({ value, isExpanded, onToggleExpand, className, style }
         style={{
           textAlign: 'left',
           overflow: 'auto',
-          fontSize: '0.75rem',
           fontFamily: 'SF Mono, Menlo, Consolas, monospace',
-          lineHeight: 1.5,
+          width: '100%',
           cursor: onToggleExpand ? 'pointer' : undefined,
           whiteSpace: 'pre',
           ...style,
@@ -141,7 +140,7 @@ export function JsonCell({ value, isExpanded, onToggleExpand, className, style }
         WebkitBoxOrient: 'vertical',
         textOverflow: 'ellipsis',
         fontFamily: 'SF Mono, Menlo, Consolas, monospace',
-        fontSize: '0.75rem',
+        width: '100%',
         cursor: onToggleExpand ? 'pointer' : undefined,
         ...style,
       }}

@@ -19,6 +19,13 @@ export function TableHeader({ children, className, style }: TableHeaderProps) {
         position: 'sticky',
         top: 0,
         zIndex: 2,
+        flex: '0 0 auto',
+        // Layout-required default. TableHeaderCell is absolutely positioned
+        // with height: 100%, which resolves against the parent's explicit
+        // `height` (not min-height) — without an explicit height here, header
+        // cells collapse to 0 and their text gets clipped by overflow: hidden.
+        // Override via style prop if a different header height is needed.
+        height: '2rem',
         overflow: 'hidden',
         width: layout.totalWidth,
         ...style,

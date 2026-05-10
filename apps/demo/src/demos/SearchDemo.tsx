@@ -7,7 +7,7 @@ import { CodeBlock } from "../components/CodeBlock";
 import { StatsBar } from "../components/StatsBar";
 import { codeExamples } from "./codeExamples";
 
-// ── Search modes ────────────────────────────────────────────────
+// ── Search modes ───────────────────────────────────
 
 type SearchMode = "contains" | "exact" | "regex";
 
@@ -22,7 +22,13 @@ const SEARCH_COLUMNS = [
 
 type SearchColumn = (typeof SEARCH_COLUMNS)[number];
 
-const TEXT_COLUMNS = ["instruction", "response_a", "response_b", "rubric", "source"];
+const TEXT_COLUMNS = [
+  "instruction",
+  "response_a",
+  "response_b",
+  "rubric",
+  "source",
+];
 
 // Build a Mosaic-sql predicate (an ExprNode) from the search state.
 // Returns null when the query is empty.
@@ -53,7 +59,7 @@ function buildPredicate(
   return or(...(parts as any[]));
 }
 
-// ── Search toolbar ──────────────────────────────────────────────
+// ── Search toolbar ──────────────────────────────────
 
 interface SearchToolbarProps {
   query: string;
@@ -137,7 +143,7 @@ function SearchToolbar({
   );
 }
 
-// ── Columns ─────────────────────────────────────────────────────
+// ── Columns ────────────────────────────────────────
 
 const columns: ColumnDef[] = [
   { key: "source", width: "6rem" },
@@ -180,7 +186,7 @@ function renderSearchCell(
   return str;
 }
 
-// ── Demo component ──────────────────────────────────────────────
+// ── Demo component ───────────────────────────────────
 
 export function SearchDemo() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -238,34 +244,16 @@ export function SearchDemo() {
         style={{
           width: "100%",
           height: "62vh",
-          position: "relative",
           border: "1px solid var(--border)",
-          borderRadius: 6,
-          background: "var(--surface)",
+          position: "relative",
           overflow: "hidden",
         }}
       >
         <Table.Root {...table.rootProps}>
-          <Table.Header
-            style={{
-              padding: "8px",
-              background: "var(--surface)",
-              borderBottom: "1px solid var(--border)",
-            }}
-          >
+          <Table.Header>
             {({ columns: cols }) =>
               cols.map((col) => (
-                <Table.HeaderCell
-                  key={col.key}
-                  column={col.key}
-                  style={{
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    color: "var(--muted-fg)",
-                  }}
-                >
+                <Table.HeaderCell key={col.key} column={col.key}>
                   <Table.SortTrigger column={col.key}>
                     {col.key.replace(/_/g, " ")}
                   </Table.SortTrigger>
@@ -277,13 +265,7 @@ export function SearchDemo() {
           <Table.Viewport>
             {({ rows }) =>
               rows.map((row) => (
-                <Table.Row
-                  key={row.key}
-                  row={row}
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                  }}
-                >
+                <Table.Row key={row.key} row={row}>
                   {({ cells }) =>
                     cells.map((cell) => (
                       <Table.Cell
@@ -293,11 +275,9 @@ export function SearchDemo() {
                         offset={cell.offset}
                         onClick={() => cell.onToggleExpand?.()}
                         style={{
-                          padding: "8px 12px",
-                          fontSize: "0.8rem",
-                          lineHeight: "1.5",
-                          color: "var(--fg)",
-                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "flex-start",
+                          cursor: cell.onToggleExpand ? "pointer" : "default",
                         }}
                       >
                         {renderSearchCell(
@@ -316,10 +296,7 @@ export function SearchDemo() {
         </Table.Root>
       </div>
 
-      <CodeBlock
-        code={codeExamples["search"]}
-        title="SearchDemo.tsx"
-      />
+      <CodeBlock code={codeExamples["search"]} title="SearchDemo.tsx" />
     </div>
   );
 }

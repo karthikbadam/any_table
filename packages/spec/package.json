@@ -1,6 +1,6 @@
 {
   "name": "@any_table/spec",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "type": "module",
   "description": "TableSpec schema + diagnostics for any_table. Pure TS, no React.",

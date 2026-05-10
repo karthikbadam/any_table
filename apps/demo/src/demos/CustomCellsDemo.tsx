@@ -17,18 +17,114 @@ function makeTrend(base: number, volatility: number, length = 20): number[] {
 }
 
 const rows = [
-  { id: "cpu", name: "CPU Usage", category: "compute", trend: makeTrend(65, 8), current: 72, change: 10.8, active: true },
-  { id: "mem", name: "Memory", category: "compute", trend: makeTrend(45, 5), current: 48, change: 6.7, active: true },
-  { id: "disk", name: "Disk I/O", category: "storage", trend: makeTrend(30, 12), current: 34, change: -8.2, active: true },
-  { id: "net-in", name: "Network In", category: "network", trend: makeTrend(120, 30), current: 135, change: 12.5, active: true },
-  { id: "net-out", name: "Network Out", category: "network", trend: makeTrend(80, 25), current: 72, change: -10.0, active: true },
-  { id: "req", name: "Requests/s", category: "traffic", trend: makeTrend(500, 80), current: 523, change: 4.6, active: true },
-  { id: "err", name: "Error Rate", category: "reliability", trend: makeTrend(2, 1.5), current: 1.8, change: -10.0, active: false },
-  { id: "lat-p50", name: "Latency p50", category: "latency", trend: makeTrend(45, 10), current: 42, change: -6.7, active: true },
-  { id: "lat-p99", name: "Latency p99", category: "latency", trend: makeTrend(200, 40), current: 220, change: 10.0, active: false },
-  { id: "gc", name: "GC Pauses", category: "runtime", trend: makeTrend(8, 4), current: 6, change: -25.0, active: true },
-  { id: "threads", name: "Active Threads", category: "runtime", trend: makeTrend(24, 6), current: 28, change: 16.7, active: true },
-  { id: "queue", name: "Queue Depth", category: "traffic", trend: makeTrend(15, 8), current: 12, change: -20.0, active: true },
+  {
+    id: "cpu",
+    name: "CPU Usage",
+    category: "compute",
+    trend: makeTrend(65, 8),
+    current: 72,
+    change: 10.8,
+    active: true,
+  },
+  {
+    id: "mem",
+    name: "Memory",
+    category: "compute",
+    trend: makeTrend(45, 5),
+    current: 48,
+    change: 6.7,
+    active: true,
+  },
+  {
+    id: "disk",
+    name: "Disk I/O",
+    category: "storage",
+    trend: makeTrend(30, 12),
+    current: 34,
+    change: -8.2,
+    active: true,
+  },
+  {
+    id: "net-in",
+    name: "Network In",
+    category: "network",
+    trend: makeTrend(120, 30),
+    current: 135,
+    change: 12.5,
+    active: true,
+  },
+  {
+    id: "net-out",
+    name: "Network Out",
+    category: "network",
+    trend: makeTrend(80, 25),
+    current: 72,
+    change: -10.0,
+    active: true,
+  },
+  {
+    id: "req",
+    name: "Requests/s",
+    category: "traffic",
+    trend: makeTrend(500, 80),
+    current: 523,
+    change: 4.6,
+    active: true,
+  },
+  {
+    id: "err",
+    name: "Error Rate",
+    category: "reliability",
+    trend: makeTrend(2, 1.5),
+    current: 1.8,
+    change: -10.0,
+    active: false,
+  },
+  {
+    id: "lat-p50",
+    name: "Latency p50",
+    category: "latency",
+    trend: makeTrend(45, 10),
+    current: 42,
+    change: -6.7,
+    active: true,
+  },
+  {
+    id: "lat-p99",
+    name: "Latency p99",
+    category: "latency",
+    trend: makeTrend(200, 40),
+    current: 220,
+    change: 10.0,
+    active: false,
+  },
+  {
+    id: "gc",
+    name: "GC Pauses",
+    category: "runtime",
+    trend: makeTrend(8, 4),
+    current: 6,
+    change: -25.0,
+    active: true,
+  },
+  {
+    id: "threads",
+    name: "Active Threads",
+    category: "runtime",
+    trend: makeTrend(24, 6),
+    current: 28,
+    change: 16.7,
+    active: true,
+  },
+  {
+    id: "queue",
+    name: "Queue Depth",
+    category: "traffic",
+    trend: makeTrend(15, 8),
+    current: 12,
+    change: -20.0,
+    active: true,
+  },
 ];
 
 // ── Custom cell renderers ──────────────────────────────
@@ -84,7 +180,9 @@ function SparklineCell({ data, width }: { data: number[]; width: number }) {
     .join(" ");
 
   const trending = data[data.length - 1] >= data[0];
-  const strokeColor = trending ? "var(--good-fg, #22c55e)" : "var(--bad-fg, #ef4444)";
+  const strokeColor = trending
+    ? "var(--good-fg, #22c55e)"
+    : "var(--bad-fg, #ef4444)";
 
   // Build fill polygon (area under the line)
   const firstX = padding;
@@ -93,7 +191,8 @@ function SparklineCell({ data, width }: { data: number[]; width: number }) {
 
   // Marker at the last data point
   const lastVal = data[data.length - 1];
-  const lastY = height - padding - ((lastVal - min) / range) * (height - padding * 2);
+  const lastY =
+    height - padding - ((lastVal - min) / range) * (height - padding * 2);
 
   return (
     <svg
@@ -102,11 +201,7 @@ function SparklineCell({ data, width }: { data: number[]; width: number }) {
       viewBox={`0 0 ${w} ${height}`}
       style={{ display: "block" }}
     >
-      <polygon
-        points={fillPoints}
-        fill={strokeColor}
-        opacity={0.12}
-      />
+      <polygon points={fillPoints} fill={strokeColor} opacity={0.12} />
       <polyline
         points={points}
         fill="none"
@@ -126,7 +221,9 @@ function ChangeCell({ value }: { value: number }) {
   const arrow = positive ? "↑" : "↓";
 
   return (
-    <span style={{ color, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+    <span
+      style={{ color, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
+    >
       {arrow} {Math.abs(value).toFixed(1)}%
     </span>
   );
@@ -168,11 +265,7 @@ const columns: ColumnDef[] = [
   { key: "active", width: "6.5rem" },
 ];
 
-function renderCustomCell(
-  value: unknown,
-  column: string,
-  cellWidth: number,
-) {
+function renderCustomCell(value: unknown, column: string, cellWidth: number) {
   if (value == null) return "";
 
   switch (column) {
@@ -227,6 +320,7 @@ export function CustomCellsDemo() {
         style={{
           width: "100%",
           height: "62vh",
+          border: "1px solid var(--border)",
           position: "relative",
           overflow: "hidden",
         }}

@@ -86,6 +86,7 @@ export function TracesDemo() {
         style={{
           width: "100%",
           height: "62vh",
+          border: "1px solid var(--border)",
           position: "relative",
           overflow: "hidden",
         }}
@@ -139,8 +140,7 @@ export function TracesDemo() {
                             cell.column === "__select"
                               ? "center"
                               : "flex-start",
-                          padding:
-                            cell.column === "__select" ? 0 : undefined,
+                          padding: cell.column === "__select" ? 0 : undefined,
                           cursor:
                             cell.column === "__select"
                               ? "default"

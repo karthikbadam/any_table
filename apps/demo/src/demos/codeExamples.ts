@@ -8,6 +8,7 @@ const spec: TableSpec = {
   rowKey: "instruction",
   expansion: { expandedRowHeight: 300 },
   height: "62vh",
+border: "1px solid var(--border)",
   columns: [
     { key: "source",      width: "6rem", cell: "text" },
     { key: "winner",      width: "2rem",

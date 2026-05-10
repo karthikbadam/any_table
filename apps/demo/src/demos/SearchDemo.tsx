@@ -22,7 +22,13 @@ const SEARCH_COLUMNS = [
 
 type SearchColumn = (typeof SEARCH_COLUMNS)[number];
 
-const TEXT_COLUMNS = ["instruction", "response_a", "response_b", "rubric", "source"];
+const TEXT_COLUMNS = [
+  "instruction",
+  "response_a",
+  "response_b",
+  "rubric",
+  "source",
+];
 
 // Build a Mosaic-sql predicate (an ExprNode) from the search state.
 // Returns null when the query is empty.
@@ -238,6 +244,7 @@ export function SearchDemo() {
         style={{
           width: "100%",
           height: "62vh",
+          border: "1px solid var(--border)",
           position: "relative",
           overflow: "hidden",
         }}
@@ -289,10 +296,7 @@ export function SearchDemo() {
         </Table.Root>
       </div>
 
-      <CodeBlock
-        code={codeExamples["search"]}
-        title="SearchDemo.tsx"
-      />
+      <CodeBlock code={codeExamples["search"]} title="SearchDemo.tsx" />
     </div>
   );
 }

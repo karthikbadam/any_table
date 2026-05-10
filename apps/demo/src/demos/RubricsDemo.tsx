@@ -65,6 +65,7 @@ export function RubricsDemo() {
         style={{
           width: "100%",
           height: "62vh",
+          border: "1px solid var(--border)",
           position: "relative",
           overflow: "hidden",
         }}
